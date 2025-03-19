@@ -1,3 +1,10 @@
+/**
+ * Chumzr Backend Server
+ * 
+ * Main entry point for the Chumzr backend application.
+ * Configured for deployment on Render.com.
+ */
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Character Creation Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input, textarea { width: 100%; padding: 8px; }
+        button { padding: 10px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+        #result { margin-top: 20px; padding: 10px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1 style="color: #4CAF50;">Character Creation Debug Form</h1>
+    <div style="padding: 15px; border: 1px solid #f1f1f1; margin-bottom: 20px; background-color: #fafafa;">
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Fill out all the required fields (Name, Description, Personality)</li>
+            <li>Select an image file for the character profile</li>
+            <li>Click Submit to test the character creation API</li>
+            <li>Check the browser console (F12) and the server logs for detailed debugging information</li>
+        </ol>
+    </div>
+
+    <form id="debugForm" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="name">Name (required):</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description (required):</label>
+            <textarea id="description" name="description" required></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="personality">Personality (required):</label>
+            <textarea id="personality" name="personality" required></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="image">Profile Image (required):</label>
+            <input type="file" id="image" name="image" accept="image/*" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="apiKey">API Key:</label>
+            <input type="text" id="apiKey" name="apiKey" value="leome-admin-key-9a74b3c2">
+        </div>
+        
+        <button type="submit">Submit</button>
+    </form>
+    
+    <div id="result">
+        <h2>API Response:</h2>
+        <pre id="responseOutput"></pre>
+    </div>
+    
+    <script>
+        document.getElementById('debugForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('name', document.getElementById('name').value);
+            formData.append('description', document.getElementById('description').value);
+            formData.append('personality', document.getElementById('personality').value);
+            
+            const imageFile = document.getElementById('image').files[0];
+            if (imageFile) {
+                formData.append('image', imageFile);
+            }
+            
+            const apiKey = document.getElementById('apiKey').value;
+            
+            // Display what we're about to send
+            console.log('Sending form data:');
+            const formEntries = [];
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+                formEntries.push(`${key}: ${typeof value === 'object' ? 'File: ' + value.name : value}`);
+            }
+            
+            document.getElementById('responseOutput').textContent = 'Sending data:\n' + formEntries.join('\n');
+            
+            try {
+                document.getElementById('responseOutput').textContent += '\n\nSending request...';
+                
+                const response = await fetch(`/api/characters?apiKey=${apiKey}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const contentType = response.headers.get('content-type');
+                let result;
+                if (contentType && contentType.includes('application/json')) {
+                    result = await response.json();
+                } else {
+                    result = await response.text();
+                }
+                
+                const output = document.getElementById('responseOutput');
+                output.textContent = JSON.stringify(result, null, 2);
+                
+                if (response.ok) {
+                    output.parentElement.style.backgroundColor = '#e6ffe6';
+                } else {
+                    output.parentElement.style.backgroundColor = '#ffe6e6';
+                }
+            } catch (error) {
+                document.getElementById('responseOutput').textContent = error.toString();
+                document.getElementById('responseOutput').parentElement.style.backgroundColor = '#ffe6e6';
+            }
+        });
+    </script>
+</body>
+</html> 

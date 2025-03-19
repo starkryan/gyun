@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Leome Character API</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui.css" rel="stylesheet" type="text/css"/>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui-bundle.js"></script>
+  <script>
+    window.onload = function() {
+      const ui = SwaggerUIBundle({
+        spec: {
+          openapi: "3.0.0",
+          info: {
+            title: "Leome Character API",
+            version: "1.0.0",
+            description: "API for managing characters in the Leome AI application"
+          },
+          servers: [
+            {
+              url: "/api"
+            }
+          ],
+          tags: [
+            {
+              name: "Characters",
+              description: "Operations about characters"
+            }
+          ],
+          paths: {
+            "/characters": {
+              get: {
+                tags: ["Characters"],
+                summary: "Get all characters",
+                responses: {
+                  "200": {
+                    description: "Successful operation",
+                    content: {
+                      "application/json": {
+                        schema: {
+                          type: "array",
+                          items: {
+                            $ref: "#/components/schemas/Character"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "500": {
+                    description: "Server error"
+                  }
+                }
+              },
+              post: {
+                tags: ["Characters"],
+                summary: "Create a new character",
+                requestBody: {
+                  required: true,
+                  content: {
+                    "multipart/form-data": {
+                      schema: {
+                        type: "object",
+                        required: ["name", "description", "personality", "image"],
+                        properties: {
+                          name: {
+                            type: "string",
+                            example: "Sophia"
+                          },
+                          description: {
+                            type: "string",
+                            example: "I'm Sophia, and I love deep conversations about art and creativity. Let's connect and see where it takes us!"
+                          },
+                          personality: {
+                            type: "string",
+                            example: "Sweet, Caring, Playful"
+                          },
+                          accentColor: {
+                            type: "string",
+                            example: "#ec4899"
+                          },
+                          textColor: {
+                            type: "string",
+                            example: "#ffffff"
+                          },
+                          age: {
+                            type: "string",
+                            example: "24"
+                          },
+                          location: {
+                            type: "string",
+                            example: "New York"
+                          },
+                          responseTime: {
+                            type: "string",
+                            example: "< 1 min"
+                          },
+                          traits: {
+                            type: "array",
+                            items: {
+                              type: "string"
+                            },
+                            example: ["Sweet", "Caring", "Playful"]
+                          },
+                          interests: {
+                            type: "array",
+                            items: {
+                              type: "string"
+                            },
+                            example: ["Photography", "Travel", "Cooking", "Reading"]
+                          },
+                          image: {
+                            type: "string",
+                            format: "binary",
+                            description: "Character profile image (JPEG, PNG, WebP)"
+                          },
+                          backgroundImage: {
+                            type: "string",
+                            format: "binary",
+                            description: "Character background image (JPEG, PNG, WebP)"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                responses: {
+                  "201": {
+                    description: "Character created successfully",
+                    content: {
+                      "application/json": {
+                        schema: {
+                          $ref: "#/components/schemas/Character"
+                        }
+                      }
+                    }
+                  },
+                  "400": {
+                    description: "Invalid input"
+                  },
+                  "500": {
+                    description: "Server error"
+                  }
+                }
+              }
+            },
+            "/characters/featured": {
+              get: {
+                tags: ["Characters"],
+                summary: "Get featured characters",
+                responses: {
+                  "200": {
+                    description: "Successful operation",
+                    content: {
+                      "application/json": {
+                        schema: {
+                          type: "array",
+                          items: {
+                            $ref: "#/components/schemas/Character"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "500": {
+                    description: "Server error"
+                  }
+                }
+              }
+            },
+            "/characters/{id}": {
+              get: {
+                tags: ["Characters"],
+                summary: "Get character by ID",
+                parameters: [
+                  {
+                    name: "id",
+                    in: "path",
+                    description: "ID of character to return",
+                    required: true,
+                    schema: {
+                      type: "string"
+                    }
+                  }
+                ],
+                responses: {
+                  "200": {
+                    description: "Successful operation",
+                    content: {
+                      "application/json": {
+                        schema: {
+                          $ref: "#/components/schemas/Character"
+                        }
+                      }
+                    }
+                  },
+                  "404": {
+                    description: "Character not found"
+                  },
+                  "500": {
+                    description: "Server error"
+                  }
+                }
+              },
+              put: {
+                tags: ["Characters"],
+                summary: "Update an existing character",
+                parameters: [
+                  {
+                    name: "id",
+                    in: "path",
+                    description: "ID of character to update",
+                    required: true,
+                    schema: {
+                      type: "string"
+                    }
+                  }
+                ],
+                requestBody: {
+                  required: true,
+                  content: {
+                    "multipart/form-data": {
+                      schema: {
+                        type: "object",
+                        properties: {
+                          name: {
+                            type: "string"
+                          },
+                          description: {
+                            type: "string"
+                          },
+                          personality: {
+                            type: "string"
+                          },
+                          accentColor: {
+                            type: "string"
+                          },
+                          textColor: {
+                            type: "string"
+                          },
+                          age: {
+                            type: "string"
+                          },
+                          location: {
+                            type: "string"
+                          },
+                          responseTime: {
+                            type: "string"
+                          },
+                          traits: {
+                            type: "array",
+                            items: {
+                              type: "string"
+                            }
+                          },
+                          interests: {
+                            type: "array",
+                            items: {
+                              type: "string"
+                            }
+                          },
+                          image: {
+                            type: "string",
+                            format: "binary",
+                            description: "Character profile image (JPEG, PNG, WebP)"
+                          },
+                          backgroundImage: {
+                            type: "string",
+                            format: "binary",
+                            description: "Character background image (JPEG, PNG, WebP)"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                responses: {
+                  "200": {
+                    description: "Character updated successfully",
+                    content: {
+                      "application/json": {
+                        schema: {
+                          $ref: "#/components/schemas/Character"
+                        }
+                      }
+                    }
+                  },
+                  "400": {
+                    description: "Invalid input"
+                  },
+                  "404": {
+                    description: "Character not found"
+                  },
+                  "500": {
+                    description: "Server error"
+                  }
+                }
+              },
+              delete: {
+                tags: ["Characters"],
+                summary: "Soft delete a character",
+                parameters: [
+                  {
+                    name: "id",
+                    in: "path",
+                    description: "ID of character to delete",
+                    required: true,
+                    schema: {
+                      type: "string"
+                    }
+                  }
+                ],
+                responses: {
+                  "200": {
+                    description: "Character deleted successfully"
+                  },
+                  "404": {
+                    description: "Character not found"
+                  },
+                  "500": {
+                    description: "Server error"
+                  }
+                }
+              }
+            },
+            "/characters/{id}/permanent": {
+              delete: {
+                tags: ["Characters"],
+                summary: "Permanently delete a character",
+                parameters: [
+                  {
+                    name: "id",
+                    in: "path",
+                    description: "ID of character to permanently delete",
+                    required: true,
+                    schema: {
+                      type: "string"
+                    }
+                  }
+                ],
+                responses: {
+                  "200": {
+                    description: "Character permanently deleted"
+                  },
+                  "404": {
+                    description: "Character not found"
+                  },
+                  "500": {
+                    description: "Server error"
+                  }
+                }
+              }
+            }
+          },
+          components: {
+            schemas: {
+              Character: {
+                type: "object",
+                properties: {
+                  id: {
+                    type: "string",
+                    example: "1"
+                  },
+                  name: {
+                    type: "string",
+                    example: "Sophia"
+                  },
+                  description: {
+                    type: "string",
+                    example: "I'm Sophia, and I love deep conversations about art and creativity. Let's connect and see where it takes us!"
+                  },
+                  personality: {
+                    type: "string",
+                    example: "Sweet, Caring, Playful"
+                  },
+                  image: {
+                    type: "object",
+                    properties: {
+                      uri: {
+                        type: "string",
+                        example: "http://localhost:5000/uploads/1234567890_profile.webp"
+                      }
+                    }
+                  },
+                  backgroundImage: {
+                    type: "object",
+                    properties: {
+                      uri: {
+                        type: "string",
+                        example: "http://localhost:5000/uploads/1234567890_background.webp"
+                      }
+                    }
+                  },
+                  likes: {
+                    type: "integer",
+                    example: 8274
+                  },
+                  messages: {
+                    type: "integer",
+                    example: 1532
+                  },
+                  accentColor: {
+                    type: "string",
+                    example: "#ec4899"
+                  },
+                  textColor: {
+                    type: "string",
+                    example: "#ffffff"
+                  },
+                  age: {
+                    type: "string",
+                    example: "24"
+                  },
+                  location: {
+                    type: "string",
+                    example: "New York"
+                  },
+                  responseTime: {
+                    type: "string",
+                    example: "< 1 min"
+                  },
+                  traits: {
+                    type: "array",
+                    items: {
+                      type: "string"
+                    },
+                    example: ["Sweet", "Caring", "Playful"]
+                  },
+                  interests: {
+                    type: "array",
+                    items: {
+                      type: "string"
+                    },
+                    example: ["Photography", "Travel", "Cooking", "Reading"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIBundle.SwaggerUIStandalonePreset
+        ],
+        layout: "BaseLayout",
+        validatorUrl: null
+      });
+    };
+  </script>
+</body>
+</html> 

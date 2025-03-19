@@ -13,12 +13,15 @@ COPY . .
 # Create necessary directories
 RUN mkdir -p logs uploads/temp public/images
 
+# Set proper permissions for directories
+RUN chmod -R 755 uploads logs public
+
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=8080
+ENV PORT=10000
 
 # Expose the port
-EXPOSE 8080
+EXPOSE 10000
 
-# Start the server
-CMD ["npm", "start"] 
+# Change start command to use src/server.js directly
+CMD ["node", "src/server.js"] 

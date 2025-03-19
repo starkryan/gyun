@@ -40,3 +40,4 @@ coverage/
 *.swo
 .DS_Store.env
 .env
+.env

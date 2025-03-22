@@ -94,6 +94,24 @@ async function findCharacterById(characterId) {
 }
 
 /**
+ * Format conversation messages to ensure they have the required role property
+ * @param {Array} conversation - Array of conversation messages
+ * @returns {Array} - Formatted conversation messages
+ */
+function formatConversationMessages(conversation) {
+  return conversation.map(msg => {
+    // If message already has role property, return as is
+    if (msg.role) return msg;
+    
+    // Otherwise, add role based on isUser property
+    return {
+      role: msg.isUser ? 'user' : 'assistant',
+      content: msg.text || msg.content
+    };
+  });
+}
+
+/**
  * Generate a response from a character
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
@@ -117,13 +135,8 @@ async function generateCharacterResponse(req, res) {
     character.messageCount = (character.messageCount || 0) + 1;
     await character.save();
     
-    // Format conversation history for OpenAI - each message needs a role
-    const formattedConversation = conversation.map(msg => ({
-      role: msg.isUser ? 'user' : 'assistant',
-      content: msg.text
-    }));
-    
-    // Build the messages array for the API call
+    // Format conversation messages and build the messages array for the API call
+    const formattedConversation = formatConversationMessages(conversation);
     const messages = [
       {
         role: 'system',
@@ -196,13 +209,8 @@ async function generatePremiumResponse(req, res) {
     character.messageCount = (character.messageCount || 0) + 1;
     await character.save();
     
-    // Format conversation history for OpenAI - each message needs a role
-    const formattedConversation = conversation.map(msg => ({
-      role: msg.isUser ? 'user' : 'assistant',
-      content: msg.text
-    }));
-    
-    // Build the messages array for the API call
+    // Format conversation messages and build the messages array for the API call
+    const formattedConversation = formatConversationMessages(conversation);
     const messages = [
       {
         role: 'system',

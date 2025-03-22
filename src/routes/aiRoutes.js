@@ -17,20 +17,7 @@ const aiController = require('../controllers/aiController');
  */
 router.post('/character/response', aiController.generateCharacterResponse);
 
-/**
- * @route POST /api/ai/character/premium-response
- * @description Generate a premium response from a character using a better model
- * @access Public
- * @body {
- *  characterId: string,
- *  message: string,
- *  conversation: array (optional)
- * }
- * @query {
- *  uncensored: boolean (default: true)
- * }
- */
-router.post('/character/premium-response', aiController.generatePremiumResponse);
+
 
 /**
  * @route GET /api/ai/character/:characterId/system-message

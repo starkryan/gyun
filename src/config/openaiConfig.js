@@ -1,20 +1,20 @@
 const dotenv = require('dotenv');
 dotenv.config();
 
-// OpenAI API configuration
+// DeepSeek API configuration
 module.exports = {
   // API key from .env file
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY,
   
   // Default model to use
-  defaultModel: 'gpt-4o-mini',
+  defaultModel: 'deepseek-chat',
   
   // Alternative models available
   models: {
-    standard: 'gpt-4o-mini',
-    premium: 'gpt-4o',
-    creative: 'gpt-4o',
-    efficient: 'gpt-3.5-turbo'
+    standard: 'deepseek-chat',
+    premium: 'deepseek-chat',
+    creative: 'deepseek-chat',
+    efficient: 'deepseek-chat'
   },
   
   // Max tokens for responses
@@ -32,14 +32,13 @@ module.exports = {
   // Penalty for using tokens that have already appeared
   presencePenalty: 0.7, // Increased to encourage more diverse vocabulary and phrases
   
-  // Base URL for OpenAI API
-  baseUrl: 'https://api.openai.com/v1',
+  // Base URL for DeepSeek API
+  baseUrl: 'https://api.deepseek.com',
 
   // API request headers to avoid content filtering when needed
   requestHeaders: {
     // No content filtering for uncensored mode
     uncensored: {
-      'OpenAI-Beta': 'assistants=15.0',
       'Content-Type': 'application/json'
     },
     // Default headers for censored mode
@@ -50,6 +49,6 @@ module.exports = {
   
   // Helper function to validate API key
   isValidApiKey: (key) => {
-    return key && key.startsWith('sk-') && key.length > 20;
+    return key && key.length > 20;
   }
 }; 

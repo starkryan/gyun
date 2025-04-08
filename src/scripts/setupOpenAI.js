@@ -119,7 +119,7 @@ function updateEnvFile(key, value) {
  * @returns {Promise<boolean>} - Whether the connection was successful
  */
 async function testOpenAIConnection() {
-  const OpenAI = require('openai');
+  const OpenAI = require('openai/index.mjs');
   
   try {
     const openai = new OpenAI({

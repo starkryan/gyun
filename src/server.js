@@ -3,6 +3,11 @@
  * 
  * Main entry point for the Chumzr backend application.
  * Configured for deployment on Render.com.
+ * 
+ * IMPORTANT: This application now uses DeepSeek API instead of OpenAI.
+ * The DeepSeek API is compatible with the OpenAI SDK but requires setting
+ * the baseURL to https://api.deepseek.com and using the model "deepseek-chat".
+ * Make sure DEEPSEEK_API_KEY is set in the .env file.
  */
 
 const express = require('express');

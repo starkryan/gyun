@@ -1,24 +1,35 @@
 /**
- * OpenAI Service
+ * DeepSeek API Service
  * 
- * Handles API calls to OpenAI for AI-generated character responses
- * using the official OpenAI npm package
+ * Handles API calls to DeepSeek for AI-generated character responses
+ * using the OpenAI compatible API
  */
 
 let OpenAI;
-try {
-  console.log('Attempting to require OpenAI package...');
-  // Try to resolve the OpenAI module path
-  console.log('Looking for OpenAI module at:', require.resolve('openai'));
-  OpenAI = require('openai');
-  console.log('OpenAI package imported successfully');
-} catch (error) {
-  console.error('ERROR IMPORTING OPENAI MODULE:', error.message);
-  console.error('Stack trace:', error.stack);
-  // Provide a mock implementation to prevent crashes
+(async () => {
+  try {
+    console.log('Attempting to import OpenAI package using dynamic import...');
+    // Use dynamic import for ES modules
+    const openaiModule = await import('openai');
+    OpenAI = openaiModule.default;
+    console.log('OpenAI package imported successfully using dynamic import');
+    
+    // Initialize the client after successful import
+    initializeOpenAIClient();
+  } catch (error) {
+    console.error('ERROR IMPORTING OPENAI MODULE:', error.message);
+    console.error('Stack trace:', error.stack);
+    // Provide a mock implementation to prevent crashes
+    setupMockOpenAI();
+  }
+})();
+
+// Function to setup mock OpenAI if import fails
+function setupMockOpenAI() {
+  console.warn('Using mock OpenAI implementation');
   OpenAI = class MockOpenAI {
     constructor() {
-      console.warn('Using mock OpenAI implementation');
+      console.warn('Mock OpenAI instance created');
     }
     
     chat = {
@@ -58,6 +69,9 @@ try {
       }
     };
   };
+  
+  // Initialize the client with mock OpenAI
+  initializeOpenAIClient();
 }
 
 // Try to load other dependencies with similar error handling
@@ -82,8 +96,8 @@ try {
   console.error('Error loading config:', error.message);
   // Provide default configuration if loading fails
   config = {
-    apiKey: process.env.OPENAI_API_KEY,
-    defaultModel: 'gpt-3.5-turbo',
+    apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY,
+    defaultModel: 'deepseek-chat',
     maxTokens: 150,
     temperature: 0.7,
     topP: 1.0,
@@ -92,52 +106,56 @@ try {
   };
 }
 
-// Create an instance of the OpenAI client
+// Create an instance of the OpenAI client with DeepSeek base URL
 let openai;
-try {
-  openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-  logger.info('OpenAI client initialized successfully');
-} catch (error) {
-  logger.error('Failed to initialize OpenAI client:', error);
-  // Create a mock client
-  openai = {
-    chat: {
-      completions: {
-        create: async () => {
-          return {
-            choices: [{
-              message: {
-                content: "I'm having trouble connecting to my API. Please try again later."
+
+function initializeOpenAIClient() {
+  try {
+    openai = new OpenAI({
+      apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY,
+      baseURL: 'https://api.deepseek.com'
+    });
+    logger.info('DeepSeek API client initialized successfully');
+  } catch (error) {
+    logger.error('Failed to initialize DeepSeek API client:', error);
+    // Create a mock client
+    openai = {
+      chat: {
+        completions: {
+          create: async () => {
+            return {
+              choices: [{
+                message: {
+                  content: "I'm having trouble connecting to my API. Please try again later."
+                }
+              }],
+              usage: {
+                prompt_tokens: 0,
+                completion_tokens: 0,
+                total_tokens: 0
               }
-            }],
-            usage: {
-              prompt_tokens: 0,
-              completion_tokens: 0,
-              total_tokens: 0
-            }
+            };
+          }
+        }
+      },
+      models: {
+        list: async () => {
+          return {
+            data: []
+          };
+        }
+      },
+      images: {
+        generate: async () => {
+          return {
+            data: [{
+              url: "https://placehold.co/600x400?text=Image+Generation+Failed"
+            }]
           };
         }
       }
-    },
-    models: {
-      list: async () => {
-        return {
-          data: []
-        };
-      }
-    },
-    images: {
-      generate: async () => {
-        return {
-          data: [{
-            url: "https://placehold.co/600x400?text=Image+Generation+Failed"
-          }]
-        };
-      }
-    }
-  };
+    };
+  }
 }
 
 /**
@@ -189,7 +207,17 @@ async function generateResponse(messages, options = {}) {
       presence_penalty: options.presencePenalty || config.presencePenalty,
     };
 
-    logger.info(`Calling OpenAI API with model: ${model}`);
+    // Log all parameters for debugging
+    console.log('======= DeepSeek API Call =======');
+    console.log('Model:', model);
+    console.log('API Key:', process.env.DEEPSEEK_API_KEY ? 'Set (starting with ' + process.env.DEEPSEEK_API_KEY.substring(0, 5) + '...)' : 'Not set');
+    console.log('Base URL:', openai.baseURL || 'Not set');
+    console.log('System Message:', messages[0]?.content?.substring(0, 50) + '...');
+    console.log('User Message:', messages[messages.length - 1]?.content);
+    console.log('Parameters:', JSON.stringify(completionParams, null, 2));
+    console.log('=====================================');
+
+    logger.info(`Calling DeepSeek API with model: ${model}`);
     
     // Check if uncensored mode is enabled
     const useUncensoredMode = options.uncensored !== false; // Default to true
@@ -204,27 +232,39 @@ async function generateResponse(messages, options = {}) {
     if (completion.usage) {
       logger.info(`Token usage - Prompt: ${completion.usage.prompt_tokens}, Completion: ${completion.usage.completion_tokens}, Total: ${completion.usage.total_tokens}`);
     }
+
+    console.log('======= DeepSeek API Response =======');
+    console.log('Response:', completion.choices[0].message.content);
+    console.log('=====================================');
     
     // Return the text of the first response
     return completion.choices[0].message.content;
   } catch (error) {
-    logger.error('Error calling OpenAI API:', error);
+    logger.error('Error calling DeepSeek API:', error);
+    console.error('======= DeepSeek API Error =======');
+    console.error('Error:', error.message);
+    if (error.response) {
+      console.error('Status:', error.response.status);
+      console.error('Data:', JSON.stringify(error.response.data, null, 2));
+    }
+    console.error('Stack:', error.stack);
+    console.error('=====================================');
     
     // Handle different types of errors
     if (error.response) {
       // OpenAI API error
       const status = error.response.status;
       const data = error.response.data;
-      logger.error(`OpenAI API Error (${status}):`, data);
+      logger.error(`DeepSeek API Error (${status}):`, data);
       
       if (status === 429) {
         throw new Error('Rate limit exceeded or insufficient quota. Please try again later.');
       } else {
-        throw new Error(`OpenAI API error: ${data.error?.message || 'Unknown error'}`);
+        throw new Error(`DeepSeek API error: ${data.error?.message || 'Unknown error'}`);
       }
     } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
       // Network error
-      throw new Error('Network error: Could not connect to OpenAI API. Please check your internet connection.');
+      throw new Error('Network error: Could not connect to DeepSeek API. Please check your internet connection.');
     } else {
       // Generic error
       throw new Error(`Error generating response: ${error.message}`);

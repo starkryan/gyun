@@ -18,10 +18,10 @@ module.exports = {
   },
   
   // Max tokens for responses
-  maxTokens: 100, // Increased for more detailed and natural responses
+  maxTokens: 350, // Increased for more detailed and natural responses
   
   // Temperature setting (higher values mean more creative responses)
-  temperature: 1.0, // Maximum for more unpredictable and human-like responses
+  temperature: 1.5, // Maximum for more unpredictable and human-like responses
   
   // Top_p parameter for more authentic text (default is 1.0)
   topP: 0.95, // Slightly reduced for more focused outputs while still maintaining variety

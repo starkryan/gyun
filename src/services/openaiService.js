@@ -8,17 +8,14 @@
 let OpenAI;
 (async () => {
   try {
-    console.log('Attempting to import OpenAI package using dynamic import...');
-    // Use dynamic import for ES modules
+    // Don't log that we're importing OpenAI
     const openaiModule = await import('openai');
     OpenAI = openaiModule.default;
-    console.log('OpenAI package imported successfully using dynamic import');
     
     // Initialize the client after successful import
     initializeOpenAIClient();
   } catch (error) {
-    console.error('ERROR IMPORTING OPENAI MODULE:', error.message);
-    console.error('Stack trace:', error.stack);
+    console.error('Error importing AI module');
     // Provide a mock implementation to prevent crashes
     setupMockOpenAI();
   }
@@ -26,10 +23,10 @@ let OpenAI;
 
 // Function to setup mock OpenAI if import fails
 function setupMockOpenAI() {
-  console.warn('Using mock OpenAI implementation');
+  console.warn('Using mock AI implementation');
   OpenAI = class MockOpenAI {
     constructor() {
-      console.warn('Mock OpenAI instance created');
+      // No logging constructor creation
     }
     
     chat = {
@@ -38,7 +35,7 @@ function setupMockOpenAI() {
           return {
             choices: [{
               message: {
-                content: "I'm having trouble connecting to my API. Please try again later."
+                content: "I'm having trouble connecting right now. Please try again later."
               }
             }],
             usage: {
@@ -115,9 +112,9 @@ function initializeOpenAIClient() {
       apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY,
       baseURL: 'https://api.deepseek.com'
     });
-    logger.info('DeepSeek API client initialized successfully');
+    logger.info('AI client initialized');
   } catch (error) {
-    logger.error('Failed to initialize DeepSeek API client:', error);
+    logger.error('Failed to initialize AI client');
     // Create a mock client
     openai = {
       chat: {
@@ -126,7 +123,7 @@ function initializeOpenAIClient() {
             return {
               choices: [{
                 message: {
-                  content: "I'm having trouble connecting to my API. Please try again later."
+                  content: "I'm having trouble connecting right now. Please try again later."
                 }
               }],
               usage: {
@@ -186,6 +183,20 @@ function initializeOpenAIClient() {
  */
 
 /**
+ * Mask sensitive content for logging
+ * @param {string} content - Content to mask
+ * @returns {string} - Masked content
+ */
+function maskSensitiveContent(content) {
+  if (!content) return '[empty]';
+  if (typeof content !== 'string') return '[non-string content]';
+  
+  // Return the first 10 characters followed by "..."
+  if (content.length <= 10) return content;
+  return content.substring(0, 10) + '...';
+}
+
+/**
  * Generate a response from OpenAI based on the provided messages and options
  * @param {Array} messages - The conversation messages array
  * @param {Object} options - Configuration options for the request
@@ -207,17 +218,8 @@ async function generateResponse(messages, options = {}) {
       presence_penalty: options.presencePenalty || config.presencePenalty,
     };
 
-    // Log all parameters for debugging
-    console.log('======= DeepSeek API Call =======');
-    console.log('Model:', model);
-    console.log('API Key:', process.env.DEEPSEEK_API_KEY ? 'Set (starting with ' + process.env.DEEPSEEK_API_KEY.substring(0, 5) + '...)' : 'Not set');
-    console.log('Base URL:', openai.baseURL || 'Not set');
-    console.log('System Message:', messages[0]?.content?.substring(0, 50) + '...');
-    console.log('User Message:', messages[messages.length - 1]?.content);
-    console.log('Parameters:', JSON.stringify(completionParams, null, 2));
-    console.log('=====================================');
-
-    logger.info(`Calling DeepSeek API with model: ${model}`);
+    // No verbose API logging - just log that a request is being made
+    logger.info(`Making AI request`);
     
     // Check if uncensored mode is enabled
     const useUncensoredMode = options.uncensored !== false; // Default to true
@@ -228,52 +230,21 @@ async function generateResponse(messages, options = {}) {
     // Make the API call to OpenAI with appropriate headers
     const completion = await openai.chat.completions.create(completionParams, { headers });
     
-    // Log token usage for monitoring
-    if (completion.usage) {
-      logger.info(`Token usage - Prompt: ${completion.usage.prompt_tokens}, Completion: ${completion.usage.completion_tokens}, Total: ${completion.usage.total_tokens}`);
-    }
-
-    console.log('======= DeepSeek API Response =======');
-    console.log('Response:', completion.choices[0].message.content);
-    console.log('=====================================');
+    // Only log minimal information - no token counts
+    logger.info(`AI request completed successfully`);
     
     // Return the text of the first response
     return completion.choices[0].message.content;
   } catch (error) {
-    logger.error('Error calling DeepSeek API:', error);
-    console.error('======= DeepSeek API Error =======');
-    console.error('Error:', error.message);
-    if (error.response) {
-      console.error('Status:', error.response.status);
-      console.error('Data:', JSON.stringify(error.response.data, null, 2));
-    }
-    console.error('Stack:', error.stack);
-    console.error('=====================================');
+    logger.error('Error in AI request');
     
-    // Handle different types of errors
-    if (error.response) {
-      // OpenAI API error
-      const status = error.response.status;
-      const data = error.response.data;
-      logger.error(`DeepSeek API Error (${status}):`, data);
-      
-      if (status === 429) {
-        throw new Error('Rate limit exceeded or insufficient quota. Please try again later.');
-      } else {
-        throw new Error(`DeepSeek API error: ${data.error?.message || 'Unknown error'}`);
-      }
-    } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-      // Network error
-      throw new Error('Network error: Could not connect to DeepSeek API. Please check your internet connection.');
-    } else {
-      // Generic error
-      throw new Error(`Error generating response: ${error.message}`);
-    }
+    // Re-throw the error to be handled by the caller
+    throw error;
   }
 }
 
 /**
- * Check the health of the OpenAI API connection
+ * Check the health of the AI API connection
  * @returns {Promise<Object>} Health status information
  */
 async function checkHealth() {
@@ -283,15 +254,13 @@ async function checkHealth() {
     
     return {
       status: 'healthy',
-      models: response.data.slice(0, 5).map(model => model.id), // Show first 5 models
       timestamp: new Date().toISOString()
     };
   } catch (error) {
-    logger.error('OpenAI health check failed:', error);
+    logger.error('AI health check failed');
     
     return {
       status: 'unhealthy',
-      error: error.message,
       timestamp: new Date().toISOString()
     };
   }
@@ -306,12 +275,11 @@ async function getAvailableModels() {
     const response = await openai.models.list();
     return response.data.map(model => ({
       id: model.id,
-      created: model.created,
-      owned_by: model.owned_by
+      created: model.created
     }));
   } catch (error) {
-    logger.error('Error fetching OpenAI models:', error);
-    throw new Error(`Failed to fetch available models: ${error.message}`);
+    logger.error('Error fetching AI models');
+    throw new Error(`Failed to fetch available models`);
   }
 }
 
@@ -331,8 +299,8 @@ async function generateImage(prompt) {
     
     return response.data[0].url;
   } catch (error) {
-    logger.error('Error generating image with OpenAI:', error);
-    throw new Error(`Failed to generate image: ${error.message}`);
+    logger.error('Error generating image');
+    throw new Error(`Failed to generate image`);
   }
 }
 

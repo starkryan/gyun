@@ -26,6 +26,53 @@ const getTimestamp = () => {
 };
 
 /**
+ * Sanitize potentially sensitive data for logging
+ * @param {any} data - Data to sanitize
+ * @returns {any} - Sanitized data safe for logging
+ */
+const sanitizeForLogging = (data) => {
+  if (!data) return data;
+  
+  // If data is a string, mask it if it's long
+  if (typeof data === 'string' && data.length > 50) {
+    return data.substring(0, 20) + '... [CONTENT TRUNCATED]';
+  }
+  
+  // If data is an object or array, process recursively
+  if (typeof data === 'object') {
+    if (Array.isArray(data)) {
+      // For arrays, sanitize each element
+      return data.map(item => sanitizeForLogging(item));
+    } else {
+      // For objects, process each property
+      const sanitized = {};
+      
+      // Sensitive keys that should always be masked
+      const sensitiveKeys = [
+        'message', 'content', 'conversation', 'system', 'prompt',
+        'response', 'password', 'token', 'apiKey', 'secret',
+        'authorization', 'userMessage', 'assistantMessage'
+      ];
+      
+      for (const key in data) {
+        if (sensitiveKeys.some(k => key.toLowerCase().includes(k.toLowerCase()))) {
+          // This is a sensitive field - mask it
+          sanitized[key] = '[SENSITIVE CONTENT MASKED]';
+        } else {
+          // Recursively sanitize non-sensitive fields
+          sanitized[key] = sanitizeForLogging(data[key]);
+        }
+      }
+      
+      return sanitized;
+    }
+  }
+  
+  // Return primitive values as is
+  return data;
+};
+
+/**
  * Log an error message
  * @param {string} message - The error message
  * @param {any} error - Optional error object
@@ -37,7 +84,7 @@ const error = (message, error) => {
       if (error instanceof Error) {
         console.error(error.stack || error.message);
       } else {
-        console.error(error);
+        console.error(sanitizeForLogging(error));
       }
     }
   }
@@ -72,7 +119,8 @@ const debug = (message, data) => {
   if (currentLogLevel >= LOG_LEVELS.DEBUG) {
     console.debug(`[${getTimestamp()}] [DEBUG] ${message}`);
     if (data !== undefined) {
-      console.debug(data);
+      // Sanitize data before logging to prevent sensitive information leakage
+      console.debug(sanitizeForLogging(data));
     }
   }
 };
@@ -83,5 +131,6 @@ module.exports = {
   warn,
   info,
   debug,
+  sanitizeForLogging,
   LOG_LEVELS
 }; 

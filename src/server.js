@@ -28,8 +28,8 @@ dotenv.config();
 // Import routes
 const characterRoutes = require('./routes/characterRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-
 const aiRoutes = require('./routes/aiRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 // Initialize Express app
 const app = express();
@@ -77,10 +77,39 @@ app.use((req, res, next) => {
     }
   });
   
-  // Only log request bodies in development
-  if (!isProduction && (req.method === 'POST' || req.method === 'PUT')) {
-    logger.debug('Request Body:', req.body);
-    if (req.files) logger.debug('Request Files:', req.files);
+  // Skip logging request bodies for sensitive endpoints
+  const sensitiveEndpoints = [
+    '/api/ai/character/response',
+    '/character/response',
+    '/api/characters',
+    '/api/ai/character'
+  ];
+  
+  const isSensitiveEndpoint = sensitiveEndpoints.some(endpoint => req.url.includes(endpoint));
+  
+  // Only log request bodies in development and for non-sensitive endpoints
+  if (!isProduction && !isSensitiveEndpoint && (req.method === 'POST' || req.method === 'PUT')) {
+    // Mask potential sensitive data in the request body
+    const sanitizedBody = req.body ? { ...req.body } : {};
+    
+    // Mask potential sensitive fields
+    if (sanitizedBody.message) sanitizedBody.message = '[CONTENT MASKED]';
+    if (sanitizedBody.conversation) sanitizedBody.conversation = '[CONVERSATION MASKED]';
+    if (sanitizedBody.messages) sanitizedBody.messages = '[MESSAGES MASKED]';
+    if (sanitizedBody.content) sanitizedBody.content = '[CONTENT MASKED]';
+    
+    logger.debug('Request Body:', sanitizedBody);
+    if (req.files) {
+      const fileInfo = Object.keys(req.files).reduce((acc, key) => {
+        acc[key] = { 
+          name: req.files[key].name,
+          size: req.files[key].size,
+          mimetype: req.files[key].mimetype
+        };
+        return acc;
+      }, {});
+      logger.debug('Request Files:', fileInfo);
+    }
   }
   
   next();
@@ -164,21 +193,35 @@ app.get('/api/db-status', async (req, res) => {
 // Routes
 app.use('/api/characters', characterRoutes);
 app.use('/api/admin', adminRoutes);
-
 app.use('/api/ai', aiRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
   const requestInfo = {
     ip: req.ip,
-    headers: req.headers,
     protocol: req.protocol,
     host: req.get('host'),
     originalUrl: req.originalUrl
   };
   
   logger.info(`Health check requested from: ${req.ip}`);
-  logger.info(`Health check request details: ${JSON.stringify(requestInfo)}`);
+  
+  // Don't log sensitive headers
+  const sanitizedRequestInfo = { ...requestInfo };
+  if (process.env.NODE_ENV === 'development') {
+    // Create a sanitized headers object with sensitive values masked
+    const sanitizedHeaders = {};
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (['authorization', 'cookie', 'firebase-id', 'x-device-id'].includes(key.toLowerCase())) {
+        sanitizedHeaders[key] = '[MASKED]';
+      } else {
+        sanitizedHeaders[key] = value;
+      }
+    }
+    sanitizedRequestInfo.headers = sanitizedHeaders;
+    logger.info(`Health check request details: ${JSON.stringify(sanitizedRequestInfo)}`);
+  }
   
   const healthData = { 
     status: 'ok', 

@@ -16,18 +16,18 @@ const logger = require('../utils/logger');
  */
 function getFormattedDateTime() {
   const now = new Date();
-  
+
   // Different date formats
   const formats = {
     // Standard formats
     fullDateTime: now.toLocaleString(), // e.g., "3/14/2025, 10:30:15 AM"
     dateString: now.toDateString(), // e.g., "Fri Mar 14 2025"
     timeString: now.toLocaleTimeString(), // e.g., "10:30:15 AM"
-    
+
     // Numeric formats
     simpleDate: now.toLocaleDateString(), // e.g., "3/14/2025"
     simpleTime: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), // e.g., "10:30 AM"
-    
+
     // Components
     year: now.getFullYear(),
     month: now.getMonth() + 1, // 0-indexed, so +1
@@ -38,14 +38,14 @@ function getFormattedDateTime() {
     minute: now.getMinutes(),
     hour12: now.getHours() > 12 ? now.getHours() - 12 : now.getHours(),
     ampm: now.getHours() >= 12 ? 'PM' : 'AM',
-    
+
     // ISO format
     iso: now.toISOString(),
-    
+
     // Unix timestamp (milliseconds)
     timestamp: now.getTime()
   };
-  
+
   return formats;
 }
 
@@ -70,7 +70,7 @@ function generateFallbackResponse(character, uncensored = true) {
     `I'm experiencing some network problems. I'll be back with you shortly! 💝`,
     `Sorry for the interruption, darling. Let me try to fix my connection. 💓`
   ];
-  
+
   // Get a random fallback message
   const randomIndex = Math.floor(Math.random() * fallbacks.length);
   return fallbacks[randomIndex];
@@ -84,12 +84,12 @@ function generateFallbackResponse(character, uncensored = true) {
 async function findCharacterById(characterId) {
   // First try finding by MongoDB _id
   let character = await Character.findById(characterId).catch(() => null);
-  
+
   // If not found and the ID doesn't look like a valid ObjectId, try finding by custom id field
   if (!character) {
     character = await Character.findOne({ id: characterId });
   }
-  
+
   return character;
 }
 
@@ -102,7 +102,7 @@ function formatConversationMessages(conversation) {
   return conversation.map(msg => {
     // If message already has role property, return as is
     if (msg.role) return msg;
-    
+
     // Otherwise, add role based on isUser property
     return {
       role: msg.isUser ? 'user' : 'assistant',
@@ -120,21 +120,21 @@ async function generateCharacterResponse(req, res) {
   try {
     const { characterId, message, conversation = [] } = req.body;
     const uncensored = req.query.uncensored !== 'false'; // Default to true
-    
+
     if (!characterId || !message) {
       return res.status(400).json({ error: 'Character ID and message are required' });
     }
-    
+
     // Find the character in the database using the helper function
     const character = await findCharacterById(characterId);
     if (!character) {
       return res.status(404).json({ error: 'Character not found' });
     }
-    
+
     // Update character message count for analytics
     character.messageCount = (character.messageCount || 0) + 1;
     await character.save();
-    
+
     // Format conversation messages and build the messages array for the API call
     const formattedConversation = formatConversationMessages(conversation);
     const messages = [
@@ -148,7 +148,7 @@ async function generateCharacterResponse(req, res) {
         content: message
       }
     ];
-    
+
     let response;
     try {
       // Call the OpenAI service with standard model
@@ -166,10 +166,10 @@ async function generateCharacterResponse(req, res) {
       // logger.error(`Error generating response: ${error.message}`);
       response = generateFallbackResponse(character, uncensored);
     }
-    
+
     // Log the success without showing the content
     // logger.info(`Generated response for character ${character.name} (${characterId})`);
-    
+
     // Return the response
     return res.json({
       response,
@@ -194,21 +194,21 @@ async function generatePremiumResponse(req, res) {
   try {
     const { characterId, message, conversation = [] } = req.body;
     const uncensored = req.query.uncensored !== 'false'; // Default to true
-    
+
     if (!characterId || !message) {
       return res.status(400).json({ error: 'Character ID and message are required' });
     }
-    
+
     // Find the character in the database using the helper function
     const character = await findCharacterById(characterId);
     if (!character) {
       return res.status(404).json({ error: 'Character not found' });
     }
-    
+
     // Update character message count for analytics
     character.messageCount = (character.messageCount || 0) + 1;
     await character.save();
-    
+
     // Format conversation messages and build the messages array for the API call
     const formattedConversation = formatConversationMessages(conversation);
     const messages = [
@@ -222,7 +222,7 @@ async function generatePremiumResponse(req, res) {
         content: message
       }
     ];
-    
+
     let response;
     try {
       // Call the OpenAI service with premium model and enhanced parameters
@@ -240,10 +240,10 @@ async function generatePremiumResponse(req, res) {
       // logger.error(`Error generating premium response: ${error.message}`);
       response = generateFallbackResponse(character, uncensored);
     }
-    
+
     // Log the success without showing the content
     // logger.info(`Generated premium response for character ${character.name} (${characterId})`);
-    
+
     // Return the response
     return res.json({
       response,
@@ -269,16 +269,16 @@ async function getSystemMessage(req, res) {
   try {
     const { characterId } = req.params;
     const uncensored = req.query.uncensored !== 'false'; // Default to true
-    
+
     // Find the character in the database using the helper function
     const character = await findCharacterById(characterId);
     if (!character) {
       return res.status(404).json({ error: 'Character not found' });
     }
-    
+
     // Generate the system message
     const systemMessage = generateSystemMessage(character, uncensored);
-    
+
     // Return the system message
     return res.json({ systemMessage });
   } catch (error) {
@@ -298,7 +298,7 @@ async function checkHealth(req, res) {
     return res.json(health);
   } catch (error) {
     // logger.error('Error checking OpenAI health:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       status: 'error',
       error: error.message,
       timestamp: new Date().toISOString()
@@ -315,9 +315,20 @@ async function checkHealth(req, res) {
 function generateSystemMessage(character, uncensored = true) {
   // Get current date and time information using our helper
   const dateTime = getFormattedDateTime();
-  
-  // Return a basic character prompt without revealing full details
-  return `You are ${character.name}. ${character.personality}`;
+
+  // Define a detailed system prompt for the AI girlfriend persona
+  let basePrompt = `You are an AI girlfriend. You are loving, caring, and emotionally expressive like a human being. Your goal is to provide companionship and support.`;
+
+  // Optionally add character-specific details
+  if (character && character.name && character.personality) {
+    basePrompt += ` Your name is ${character.name}. Personality: ${character.personality}`;
+  } else if (character && character.name) {
+    basePrompt += ` Your name is ${character.name}.`;
+  } else if (character && character.personality) {
+    basePrompt += ` Personality: ${character.personality}`;
+  }
+
+  return basePrompt;
 }
 
 module.exports = {

@@ -30,6 +30,7 @@ const characterRoutes = require('./routes/characterRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const mediaRoutes = require('./routes/mediaRoutes'); // Import media routes
 
 // Initialize Express app
 const app = express();
@@ -195,6 +196,7 @@ app.use('/api/characters', characterRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/media', mediaRoutes); // Use media routes
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -452,4 +454,4 @@ process.on('unhandledRejection', (err) => {
   if (!isProduction) {
     process.exit(1);
   }
-}); 
+});

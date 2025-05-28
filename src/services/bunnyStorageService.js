@@ -2,6 +2,7 @@ const axios = require('axios');
 const sharp = require('sharp');
 const path = require('path');
 const bunnyConfig = require('../config/bunnyConfig');
+const logger = require('../utils/logger');
 
 /**
  * Service for handling file uploads to Bunny.net Storage
@@ -15,10 +16,10 @@ class BunnyStorageService {
     this.baseUrl = bunnyConfig.storageBaseUrl;
     this.cdnBaseUrl = bunnyConfig.cdnBaseUrl;
     
-    console.log('BunnyStorageService initialized with:');
-    console.log('- Storage Zone:', this.storageZoneName);
-    console.log('- Base URL:', this.baseUrl);
-    console.log('- API Key (first 5 chars):', this.storageApiKey ? this.storageApiKey.substring(0, 5) + '...' : 'Not set');
+    logger.info('BunnyStorageService initialized with:');
+    logger.info(`- Storage Zone: ${this.storageZoneName}`);
+    logger.info(`- Base URL: ${this.baseUrl}`);
+    logger.info(`- API Key (first 5 chars): ${this.storageApiKey ? this.storageApiKey.substring(0, 5) + '...' : 'Not set'}`);
   }
 
   /**
@@ -173,6 +174,37 @@ class BunnyStorageService {
       throw new Error(`Failed to delete file from Bunny.net: ${error.message}`);
     }
   }
+
+  /**
+   * List files in a specified path within the Bunny.net storage zone.
+   * @param {string} path - The path within the storage zone to list files from (e.g., 'videos/', 'characters/').
+   * @returns {Promise<Array<Object>>} An array of file objects from Bunny.net.
+   */
+  async listFiles(path = '') {
+    try {
+      const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+      const url = `${this.baseUrl}/${this.storageZoneName}/${normalizedPath}`;
+
+      logger.info(`Listing files from Bunny.net URL: ${url}`);
+
+      const response = await axios.get(url, {
+        headers: {
+          'AccessKey': this.storageApiKey,
+          'Accept': 'application/json' // Ensure we get JSON response
+        }
+      });
+
+      logger.info('Bunny.net list files response status:', response.status);
+      return response.data; // This should be an array of file objects
+    } catch (error) {
+      logger.error('Error listing files from Bunny.net:', error.message);
+      if (error.response) {
+        logger.error('Status:', error.response.status);
+        logger.error('Response:', error.response.data);
+      }
+      throw new Error(`Failed to list files from Bunny.net: ${error.message}`);
+    }
+  }
 }
 
-module.exports = new BunnyStorageService(); 
+module.exports = new BunnyStorageService();

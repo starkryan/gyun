@@ -19,7 +19,29 @@ const generateShortId = () => {
 // Get all characters
 exports.getAllCharacters = async (req, res) => {
   try {
-    const characters = await Character.find({ isActive: true }).sort({ createdAt: -1 });
+    // Optimize: Select only necessary fields to reduce data transfer
+    // Consider adding indexes on 'isActive' and 'createdAt' for better performance.
+    // For very large datasets, implement pagination (e.g., .skip().limit()).
+    const characters = await Character.find(
+      { isActive: true },
+      { // Projection: Include only fields needed by the frontend
+        id: 1,
+        name: 1,
+        description: 1,
+        personality: 1,
+        imageUrl: 1,
+        backgroundImageUrl: 1,
+        accentColor: 1,
+        textColor: 1,
+        age: 1,
+        location: 1,
+        responseTime: 1,
+        traits: 1,
+        interests: 1,
+        isPremium: 1, // Assuming isPremium might be needed for frontend Profile interface
+        style: 1, // Assuming style might be needed for frontend Profile interface
+      }
+    ).sort({ createdAt: -1 });
     
     // Get server base URL for API endpoints
     const baseUrl = `${req.protocol}://${req.get('host')}`;
@@ -38,7 +60,9 @@ exports.getAllCharacters = async (req, res) => {
       location: char.location,
       responseTime: char.responseTime,
       traits: char.traits,
-      interests: char.interests
+      interests: char.interests,
+      isPremium: char.isPremium,
+      style: char.style,
     }));
     
     res.status(200).json(transformedCharacters);
@@ -580,4 +604,4 @@ exports.getCharacterBackgroundImage = async (req, res) => {
     console.error('Error retrieving character background image:', error);
     res.status(500).json({ message: 'Server error' });
   }
-}; 
+};

@@ -2,8 +2,8 @@ const crypto = require('crypto');
 
 // IMPORTANT: Replace with your actual PayU Merchant Key and Salt
 // These should ideally be loaded from environment variables for security
-const PAYU_MERCHANT_KEY = 'AyMWav'; // Provided by user
-const PAYU_SALT = 'yzyJdZ6CmKReJBldt5TxOqrHUkmoGyKG'; // Provided by user (32-bit salt)
+const PAYU_MERCHANT_KEY = '3LySeo'; // Provided by user
+const PAYU_SALT = 'qzDFCG4c3ocV6m8Z0GbazBsvfqvIXlZO'; // Provided by user (32-bit salt)
 
 // Helper function to generate SHA-512 hash
 const generateSHA512Hash = (data) => {
@@ -13,58 +13,22 @@ const generateSHA512Hash = (data) => {
 // Controller for generating PayU hash
 exports.generatePayuHash = async (req, res) => {
     try {
-        const {
-            key,
-            txnid,
-            amount,
-            productinfo,
-            firstname,
-            email,
-            phone, // Added phone
-            android_surl, // Added
-            android_furl, // Added
-            post_url, // Added
-            payment_mode, // Added
-            environment, // Added
-            hashType, // To determine which hash to generate
-            package_name, // For UPI intent
-            user_credentials, // For store card
-            vpa, // For VPA validation/collect flow
-            additional_param, // UDFs etc.
-            si_params // Standing Instruction params
-        } = req.body;
+        const { hashString, hashName } = req.body; // Expect hashString and hashName from SDK event
 
-        let hashString = '';
-        let paymentHash = '';
-        let validateVpaHash = '';
-
-        // Construct the string for payment hash
-        // Format: key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt
-        const udf1 = additional_param?.udf1 || '';
-        const udf2 = additional_param?.udf2 || '';
-        const udf3 = additional_param?.udf3 || '';
-        const udf4 = additional_param?.udf4 || '';
-        const udf5 = additional_param?.udf5 || '';
-
-        // Payment hash string
-        const paymentHashBase = `${key}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|${udf1}|${udf2}|${udf3}|${udf4}|${udf5}||||||`;
-        paymentHash = generateSHA512Hash(paymentHashBase + PAYU_SALT);
-
-        // VPA validation hash string (if needed)
-        // Format: sha512(key|<validateVPA>|vpa|salt)
-        if (vpa) {
-            const validateVpaCommand = 'validate_vpa'; // Command for VPA validation
-            const validateVpaHashBase = `${key}|${validateVpaCommand}|${vpa}|`;
-            validateVpaHash = generateSHA512Hash(validateVpaHashBase + PAYU_SALT);
+        if (!hashString || !hashName) {
+            return res.status(400).json({ message: 'Missing hashString or hashName in request body' });
         }
 
-        // Return all generated hashes
+        // The hashString provided by the SDK's generateHash event already contains all necessary parameters
+        // (e.g., key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5|||||| for payment hash)
+        // We just need to append the salt and hash it.
+        const hashValue = generateSHA512Hash(hashString + PAYU_SALT);
+
         const result = {
-            payment: paymentHash,
-            validate_vpa: validateVpaHash || null // Include as null if not generated
+            [hashName]: hashValue // Return only the requested hash with its name
         };
         
-        console.log('Backend: Generated hashes. Sending 200:', result);
+        console.log('Backend: Generated hash. Sending 200:', result);
         res.status(200).json(result);
 
     } catch (error) {

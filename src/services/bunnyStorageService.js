@@ -15,7 +15,7 @@ class BunnyStorageService {
     this.region = bunnyConfig.region;
     this.baseUrl = bunnyConfig.storageBaseUrl;
     this.cdnBaseUrl = bunnyConfig.cdnBaseUrl;
-    
+
     logger.info('BunnyStorageService initialized with:');
     logger.info(`- Storage Zone: ${this.storageZoneName}`);
     logger.info(`- Base URL: ${this.baseUrl}`);
@@ -55,20 +55,20 @@ class BunnyStorageService {
   async uploadFile(fileBuffer, filePath, contentType) {
     try {
       const url = this.getStorageUrl(filePath);
-      
+
       console.log(`Uploading to Bunny.net URL: ${url}`);
       console.log(`File size: ${fileBuffer.length} bytes`);
       console.log(`Content-Type: ${contentType || bunnyConfig.defaultContentType}`);
-      
+
       // Use the API key exactly as configured in .env
       // The API key format must be preserved exactly as provided by Bunny.net
       console.log(`Using API key (first 5 chars): ${this.storageApiKey.substring(0, 5)}...`);
-      
+
       // Upload to Bunny.net Storage using specific Axios options to match curl behavior
       const response = await axios.put(url, fileBuffer, {
         headers: {
           'AccessKey': this.storageApiKey,
-          'Content-Type': contentType || bunnyConfig.defaultContentType
+          'Content-Type': contentType || bunnyConfig.defaultContentType,
         },
         // Important: these settings better match how curl handles binary data
         maxContentLength: Infinity,
@@ -76,11 +76,11 @@ class BunnyStorageService {
         transformRequest: [(data) => {
           // Return the buffer directly without any transformation
           return data;
-        }]
+        }],
       });
-      
+
       console.log('Bunny.net upload response:', response.status, response.statusText);
-      
+
       // Return the CDN URL for the uploaded file
       const cdnUrl = this.getCdnUrl(filePath);
       console.log('CDN URL for uploaded file:', cdnUrl);
@@ -112,7 +112,7 @@ class BunnyStorageService {
       } else {
         sharpInstance = sharp(image);
       }
-      
+
       // Apply image processing based on image type
       if (isBackground) {
         // For background images, maintain aspect ratio but limit dimensions
@@ -121,7 +121,7 @@ class BunnyStorageService {
             width: options.width || 1200,
             height: options.height || 800,
             fit: 'inside',
-            withoutEnlargement: true
+            withoutEnlargement: true,
           });
       } else {
         // For profile images, create a square image
@@ -129,21 +129,21 @@ class BunnyStorageService {
           .resize({
             width: options.width || 400,
             height: options.height || 400,
-            fit: 'cover'
+            fit: 'cover',
           });
       }
-      
+
       // Apply final formatting
       const processedImageBuffer = await sharpInstance
         .webp({ quality: options.quality || 85 })
         .toBuffer();
-      
+
       // Define the path in Bunny storage
       const imageType = isBackground ? 'background' : 'profile';
       const filePath = `characters/${characterId}/${imageType}-${Date.now()}.webp`;
-      
+
       console.log(`Processing complete. Uploading ${imageType} image for character ${characterId}`);
-      
+
       // Upload the processed image
       return await this.uploadFile(processedImageBuffer, filePath, 'image/webp');
     } catch (error) {
@@ -160,14 +160,14 @@ class BunnyStorageService {
   async deleteFile(filePath) {
     try {
       const url = this.getStorageUrl(filePath);
-      
+
       // Use the API key exactly as provided in .env
       await axios.delete(url, {
         headers: {
-          'AccessKey': this.storageApiKey
-        }
+          'AccessKey': this.storageApiKey,
+        },
       });
-      
+
       return true;
     } catch (error) {
       console.error('Error deleting from Bunny.net:', error.message);
@@ -190,8 +190,8 @@ class BunnyStorageService {
       const response = await axios.get(url, {
         headers: {
           'AccessKey': this.storageApiKey,
-          'Accept': 'application/json' // Ensure we get JSON response
-        }
+          'Accept': 'application/json', // Ensure we get JSON response
+        },
       });
 
       logger.info('Bunny.net list files response status:', response.status);

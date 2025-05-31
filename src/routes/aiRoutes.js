@@ -39,4 +39,4 @@ router.get('/character/:characterId/system-message', aiController.getSystemMessa
  */
 router.get('/health', aiController.checkHealth);
 
-module.exports = router; 
+module.exports = router;

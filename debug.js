@@ -7,7 +7,7 @@ const dependencies = [
   'cors',
   'dotenv',
   'openai',
-  'cookie-parser'
+  'cookie-parser',
 ];
 
 dependencies.forEach(dep => {
@@ -25,4 +25,4 @@ console.log('- MONGODB_URI:', process.env.MONGODB_URI ? '✅ Set' : '❌ Not set
 console.log('- OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✅ Set' : '❌ Not set');
 console.log('- PORT:', process.env.PORT ? `✅ Set to ${process.env.PORT}` : '❌ Not set (will use default 5000)');
 
-console.log('\nDebug script completed.'); 
+console.log('\nDebug script completed.');

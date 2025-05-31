@@ -1,6 +1,6 @@
 /**
  * Authentication Middleware
- * 
+ *
  * Handles authentication for admin routes and protected endpoints
  */
 
@@ -19,7 +19,7 @@ const validateAdmin = (req, res, next) => {
       logger.error('ADMIN_API_KEY not set in environment variables');
       return res.status(500).json({
         status: 'error',
-        message: 'Server configuration error'
+        message: 'Server configuration error',
       });
     }
 
@@ -31,7 +31,7 @@ const validateAdmin = (req, res, next) => {
       logger.warn(`Invalid admin API key attempt: ${req.ip}`);
       return res.status(401).json({
         status: 'error',
-        message: 'Unauthorized - invalid API key'
+        message: 'Unauthorized - invalid API key',
       });
     }
 
@@ -39,7 +39,7 @@ const validateAdmin = (req, res, next) => {
     req.adminUser = {
       username: 'admin',
       role: 'admin',
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     // Authentication successful, proceed to the next middleware
@@ -48,7 +48,7 @@ const validateAdmin = (req, res, next) => {
     logger.error('Error in admin authentication middleware:', error);
     return res.status(500).json({
       status: 'error',
-      message: 'Internal server error during authentication'
+      message: 'Internal server error during authentication',
     });
   }
 };
@@ -62,31 +62,31 @@ const validateFirebaseAuth = (req, res, next) => {
     // Get the Firebase token from the request headers
     const firebaseToken = req.headers['firebase-token'];
     const firebaseId = req.headers['firebase-id'];
-    
+
     // For anonymous auth, we only validate that an ID is present
     // In a production app, you would verify the token with Firebase Admin SDK
     if (!firebaseId) {
       logger.warn(`Authentication attempt without Firebase ID: ${req.ip}`);
       return res.status(401).json({
         status: 'error',
-        message: 'Unauthorized - missing authentication'
+        message: 'Unauthorized - missing authentication',
       });
     }
-    
+
     // Set the authenticated user info for use in controllers
     req.user = {
       firebaseId,
       isAnonymous: !firebaseToken, // If no token, assume anonymous auth
-      timestamp: new Date()
+      timestamp: new Date(),
     };
-    
+
     // Authentication successful, proceed to the next middleware
     next();
   } catch (error) {
     logger.error('Error in Firebase authentication middleware:', error);
     return res.status(500).json({
       status: 'error',
-      message: 'Internal server error during authentication'
+      message: 'Internal server error during authentication',
     });
   }
 };
@@ -104,5 +104,5 @@ const validateUser = (req, res, next) => {
 module.exports = {
   validateAdmin,
   validateUser,
-  validateFirebaseAuth
-}; 
+  validateFirebaseAuth,
+};

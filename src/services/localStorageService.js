@@ -12,7 +12,7 @@ class LocalStorageService {
     // Create the local storage directory if it doesn't exist
     this.storageDir = path.join(__dirname, '../../public/images');
     this.storageUrlBase = '/images';
-    
+
     if (!fs.existsSync(this.storageDir)) {
       fs.mkdirSync(this.storageDir, { recursive: true });
     }
@@ -28,16 +28,16 @@ class LocalStorageService {
     try {
       // Convert the Bunny.net style path to a local path
       const localPath = this.getLocalPath(filePath);
-      
+
       // Create the directory if it doesn't exist
       const dir = path.dirname(localPath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      
+
       // Write the file
       fs.writeFileSync(localPath, fileBuffer);
-      
+
       // Return the URL
       return this.getPublicUrl(filePath);
     } catch (error) {
@@ -85,7 +85,7 @@ class LocalStorageService {
       } else {
         sharpInstance = sharp(image);
       }
-      
+
       // Apply image processing based on image type
       if (isBackground) {
         // For background images, maintain aspect ratio but limit dimensions
@@ -94,7 +94,7 @@ class LocalStorageService {
             width: options.width || 1200,
             height: options.height || 800,
             fit: 'inside',
-            withoutEnlargement: true
+            withoutEnlargement: true,
           });
       } else {
         // For profile images, create a square image
@@ -102,19 +102,19 @@ class LocalStorageService {
           .resize({
             width: options.width || 400,
             height: options.height || 400,
-            fit: 'cover'
+            fit: 'cover',
           });
       }
-      
+
       // Apply final formatting
       const processedImageBuffer = await sharpInstance
         .webp({ quality: options.quality || 85 })
         .toBuffer();
-      
+
       // Define the path in storage
       const imageType = isBackground ? 'background' : 'profile';
       const filePath = `characters/${characterId}/${imageType}-${Date.now()}.webp`;
-      
+
       // Save the processed image
       return await this.saveFile(processedImageBuffer, filePath);
     } catch (error) {
@@ -131,11 +131,11 @@ class LocalStorageService {
   async deleteFile(filePath) {
     try {
       const localPath = this.getLocalPath(filePath);
-      
+
       if (fs.existsSync(localPath)) {
         fs.unlinkSync(localPath);
       }
-      
+
       return true;
     } catch (error) {
       console.error('Error deleting file:', error.message);
@@ -144,4 +144,4 @@ class LocalStorageService {
   }
 }
 
-module.exports = new LocalStorageService(); 
+module.exports = new LocalStorageService();

@@ -8,13 +8,13 @@ const LOG_LEVELS = {
   ERROR: 0,
   WARN: 1,
   INFO: 2,
-  DEBUG: 3
+  DEBUG: 3,
 };
 
 // Current log level (can be set via environment variable)
 // Default to INFO in production, DEBUG in development
-const currentLogLevel = process.env.LOG_LEVEL 
-  ? parseInt(process.env.LOG_LEVEL) 
+const currentLogLevel = process.env.LOG_LEVEL
+  ? parseInt(process.env.LOG_LEVEL)
   : (process.env.NODE_ENV === 'production' ? LOG_LEVELS.INFO : LOG_LEVELS.DEBUG);
 
 /**
@@ -31,13 +31,13 @@ const getTimestamp = () => {
  * @returns {any} - Sanitized data safe for logging
  */
 const sanitizeForLogging = (data) => {
-  if (!data) return data;
-  
+  if (!data) {return data;}
+
   // If data is a string, mask it if it's long
   if (typeof data === 'string' && data.length > 50) {
     return data.substring(0, 20) + '... [CONTENT TRUNCATED]';
   }
-  
+
   // If data is an object or array, process recursively
   if (typeof data === 'object') {
     if (Array.isArray(data)) {
@@ -46,14 +46,14 @@ const sanitizeForLogging = (data) => {
     } else {
       // For objects, process each property
       const sanitized = {};
-      
+
       // Sensitive keys that should always be masked
       const sensitiveKeys = [
         'message', 'content', 'conversation', 'system', 'prompt',
         'response', 'password', 'token', 'apiKey', 'secret',
-        'authorization', 'userMessage', 'assistantMessage'
+        'authorization', 'userMessage', 'assistantMessage',
       ];
-      
+
       for (const key in data) {
         if (sensitiveKeys.some(k => key.toLowerCase().includes(k.toLowerCase()))) {
           // This is a sensitive field - mask it
@@ -63,11 +63,11 @@ const sanitizeForLogging = (data) => {
           sanitized[key] = sanitizeForLogging(data[key]);
         }
       }
-      
+
       return sanitized;
     }
   }
-  
+
   // Return primitive values as is
   return data;
 };
@@ -132,5 +132,5 @@ module.exports = {
   info,
   debug,
   sanitizeForLogging,
-  LOG_LEVELS
-}; 
+  LOG_LEVELS,
+};

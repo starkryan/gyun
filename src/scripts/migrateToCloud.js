@@ -1,14 +1,14 @@
 /**
  * MongoDB Migration Script - Local to Cloud
- * 
+ *
  * This script migrates data from a local MongoDB instance to a cloud MongoDB (Atlas)
  * It will:
  * 1. Connect to both local and cloud MongoDB instances
  * 2. Back up all collections from the local database
  * 3. Migrate the data to the cloud database
  * 4. Verify the migration was successful
- * 
- * Usage: 
+ *
+ * Usage:
  *   node src/scripts/migrateToCloud.js
  */
 
@@ -24,7 +24,7 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 // Create a readline interface for user interaction
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 // Backup directory
@@ -34,7 +34,7 @@ const BACKUP_DIR = path.join(__dirname, '../../backup');
 const mongoOptions = {
   serverSelectionTimeoutMS: 5000,
   connectTimeoutMS: 10000,
-  socketTimeoutMS: 45000
+  socketTimeoutMS: 45000,
 };
 
 // Connection strings
@@ -59,7 +59,7 @@ if (!fs.existsSync(BACKUP_DIR)) {
  */
 async function connectToMongoDB(uri, name) {
   console.log(`Connecting to ${name} MongoDB...`);
-  
+
   try {
     const connection = await mongoose.createConnection(uri, mongoOptions);
     console.log(`✅ Connected to ${name} MongoDB`);
@@ -88,14 +88,14 @@ async function getCollections(connection) {
  */
 async function backupCollection(connection, collectionName) {
   console.log(`Backing up collection: ${collectionName}`);
-  
+
   try {
     const collection = connection.db.collection(collectionName);
     const documents = await collection.find({}).toArray();
-    
+
     const backupPath = path.join(BACKUP_DIR, `${collectionName}.json`);
     fs.writeFileSync(backupPath, JSON.stringify(documents, null, 2));
-    
+
     console.log(`✅ Backed up ${documents.length} documents from ${collectionName}`);
     return documents.length;
   } catch (error) {
@@ -112,29 +112,29 @@ async function backupCollection(connection, collectionName) {
  */
 async function restoreCollection(connection, collectionName) {
   console.log(`Restoring collection: ${collectionName}`);
-  
+
   try {
     const backupPath = path.join(BACKUP_DIR, `${collectionName}.json`);
-    
+
     if (!fs.existsSync(backupPath)) {
       console.error(`❌ Backup file not found for ${collectionName}`);
       return 0;
     }
-    
+
     const documents = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
-    
+
     if (documents.length === 0) {
       console.log(`ℹ️ No documents to restore for ${collectionName}`);
       return 0;
     }
-    
+
     const collection = connection.db.collection(collectionName);
-    
+
     // Drop the collection if it exists
     await collection.drop().catch(() => {
       // Ignore error if collection doesn't exist
     });
-    
+
     // Insert all documents
     const result = await collection.insertMany(documents);
     console.log(`✅ Restored ${result.insertedCount} documents to ${collectionName}`);
@@ -154,17 +154,17 @@ async function restoreCollection(connection, collectionName) {
  */
 async function verifyMigration(localConn, cloudConn, collections) {
   console.log('\n🔍 Verifying migration...');
-  
+
   let success = true;
-  
+
   for (const collectionName of collections) {
     try {
       const localCollection = localConn.db.collection(collectionName);
       const cloudCollection = cloudConn.db.collection(collectionName);
-      
+
       const localCount = await localCollection.countDocuments();
       const cloudCount = await cloudCollection.countDocuments();
-      
+
       if (localCount === cloudCount) {
         console.log(`✅ ${collectionName}: ${cloudCount}/${localCount} documents migrated`);
       } else {
@@ -176,7 +176,7 @@ async function verifyMigration(localConn, cloudConn, collections) {
       success = false;
     }
   }
-  
+
   return success;
 }
 
@@ -198,80 +198,80 @@ function confirm(message) {
  */
 async function migrateToCloud() {
   console.log('=== MongoDB Migration - Local to Cloud ===');
-  
+
   try {
     // Check if cloud MongoDB URI is set
     if (!CLOUD_MONGODB_URI) {
       console.error('❌ Cloud MongoDB URI is not set in .env file');
       return;
     }
-    
+
     // Connect to MongoDB instances
     localConnection = await connectToMongoDB(LOCAL_MONGODB_URI, 'Local');
     cloudConnection = await connectToMongoDB(CLOUD_MONGODB_URI, 'Cloud');
-    
+
     // Get collections from local database
     const collections = await getCollections(localConnection);
     console.log(`\nFound ${collections.length} collections: ${collections.join(', ')}`);
-    
+
     // Confirm backup
     const backupConfirmed = await confirm('\nDo you want to backup the local database first?');
-    
+
     // Backup collections if confirmed
     let backup = {};
     if (backupConfirmed) {
       console.log('\n📦 Backing up local database...');
-      
+
       for (const collectionName of collections) {
         const count = await backupCollection(localConnection, collectionName);
         backup[collectionName] = count;
       }
-      
+
       console.log('\n✅ Backup completed');
       console.log(`📁 Backup files saved to: ${BACKUP_DIR}`);
     }
-    
+
     // Confirm migration
     const migrateConfirmed = await confirm('\nDo you want to migrate data to the cloud database?');
-    
+
     if (!migrateConfirmed) {
       console.log('Migration canceled');
       return;
     }
-    
+
     // Migrate collections
     console.log('\n🚀 Migrating data to cloud database...');
-    
+
     for (const collectionName of collections) {
       await restoreCollection(cloudConnection, collectionName);
     }
-    
+
     // Verify migration
     const verified = await verifyMigration(localConnection, cloudConnection, collections);
-    
+
     if (verified) {
       console.log('\n✅ Migration completed successfully');
     } else {
       console.error('\n⚠️ Migration completed with errors');
     }
-    
+
     console.log('\n=== Migration Summary ===');
     console.log('Local Database:', localConnection.db.databaseName);
     console.log('Cloud Database:', cloudConnection.db.databaseName);
     console.log('Collections Migrated:', collections.length);
     console.log('Backup Directory:', BACKUP_DIR);
-    
+
   } catch (error) {
     console.error('❌ Migration failed:', error);
   } finally {
     // Close MongoDB connections
-    if (localConnection) await localConnection.close();
-    if (cloudConnection) await cloudConnection.close();
+    if (localConnection) {await localConnection.close();}
+    if (cloudConnection) {await cloudConnection.close();}
     rl.close();
-    
+
     console.log('\nMigration process completed');
   }
 }
 
 // Run the migration
-migrateToCloud(); 
+migrateToCloud();

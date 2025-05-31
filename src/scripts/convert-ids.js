@@ -1,6 +1,6 @@
 /**
  * Migration script to convert existing character IDs from UUID format to shorter numeric format
- * 
+ *
  * Run this script with: node src/scripts/convert-ids.js
  */
 
@@ -27,38 +27,38 @@ mongoose
   .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/lomu')
   .then(async () => {
     console.log('✅ Connected to MongoDB successfully');
-    
+
     try {
       // Get all characters
       const characters = await Character.find();
       console.log(`Found ${characters.length} characters to process`);
-      
+
       // Process each character
       let updateCount = 0;
-      
+
       for (const character of characters) {
         // Check if the ID is a UUID (contains hyphens or is 36 chars long)
         if (character.id.includes('-') || character.id.length > 10) {
           // Generate a new short ID
           const newId = generateShortId();
           console.log(`Converting ${character.id} to ${newId}`);
-          
+
           // Update image URLs if they exist
           if (character.imageUrl) {
             character.imageUrl = character.imageUrl.replace(character.id, newId);
           }
-          
+
           if (character.backgroundImageUrl) {
             character.backgroundImageUrl = character.backgroundImageUrl.replace(character.id, newId);
           }
-          
+
           // Update the ID
           character.id = newId;
           await character.save();
           updateCount++;
         }
       }
-      
+
       console.log(`✅ Successfully updated ${updateCount} characters`);
     } catch (error) {
       console.error('❌ Error during migration:', error);
@@ -70,4 +70,4 @@ mongoose
   })
   .catch((err) => {
     console.error('❌ Failed to connect to MongoDB:', err.message);
-  }); 
+  });

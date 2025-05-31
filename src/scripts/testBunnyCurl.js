@@ -16,7 +16,7 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 const STORAGE_ZONE = bunnyConfig.storageZoneName;
 const REGION = bunnyConfig.region;
 const API_KEY = process.env.BUNNY_API_KEY;
-const BASE_URL = "storage.bunnycdn.com";
+const BASE_URL = 'storage.bunnycdn.com';
 const HOSTNAME = REGION ? `${REGION}.${BASE_URL}` : BASE_URL;
 
 // Create a test file
@@ -57,23 +57,23 @@ console.log(sanitizedCommand);
 // Execute the curl command
 exec(curlCommand, (error, stdout, stderr) => {
   console.log('\n--- Response ---');
-  
+
   if (error) {
     console.error(`Error: ${error.message}`);
     console.log('\nCurl stderr output:');
     console.log(stderr);
-  } 
-  
+  }
+
   if (stdout) {
     console.log('Curl stdout:');
     console.log(stdout);
   }
-  
+
   // Test file URL access
   console.log('\nTesting file access...');
   const cdnUrl = `${bunnyConfig.cdnBaseUrl}/${FILENAME}`;
   console.log(`CDN URL: ${cdnUrl}`);
-  
+
   const curlGetCommand = `curl -I "${cdnUrl}"`;
   exec(curlGetCommand, (getError, getStdout, getStderr) => {
     console.log('\n--- CDN Access Response ---');
@@ -86,24 +86,24 @@ exec(curlCommand, (error, stdout, stderr) => {
     if (getStderr) {
       console.log('Stderr:', getStderr);
     }
-    
+
     // Fix the issue with the API key format
     console.log('\n=== Troubleshooting ===');
-    
+
     // Check if API key contains malformed hyphens
     if (API_KEY && API_KEY.includes('a')) {
       console.log('⚠️ WARNING: Your API key appears to have formatting issues.');
       console.log('The key may have improper hyphens or formatting errors.');
       console.log('Please ensure it matches the format shown in the Bunny.net dashboard.');
-      
+
       // Suggest fixed API key format
       const fixedKey = API_KEY.replace(/([0-9a-f]+)a([0-9a-f]+)/, '$1-$2');
       console.log('\nTry updating your .env file with this corrected API key:');
       console.log(`BUNNY_API_KEY=${fixedKey}`);
     }
-    
+
     // Clean up test file
     fs.unlinkSync(TEST_FILE_PATH);
     console.log('\nTest file removed.');
   });
-}); 
+});

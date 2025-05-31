@@ -3,7 +3,7 @@ const crypto = require('crypto');
 // IMPORTANT: Replace with your actual PayU Merchant Key and Salt
 // These should ideally be loaded from environment variables for security
 const PAYU_MERCHANT_KEY = '3LySeo'; // Provided by user
-const PAYU_SALT = 'qzDFCG4c3ocV6m8Z0GbazBsvfqvIXlZO'; // Provided by user (32-bit salt)
+const PAYU_SALT = 'qzDFCG4c3ocV6m8Z0GbazBsvfqvIXlZO'; // Updated to match client-side merchantSalt
 
 // Helper function to generate SHA-512 hash
 const generateSHA512Hash = (data) => {
@@ -13,7 +13,7 @@ const generateSHA512Hash = (data) => {
 // Controller for generating PayU hash
 exports.generatePayuHash = async (req, res) => {
     try {
-        const { hashString, hashName } = req.body; // Expect hashString and hashName from SDK event
+        const { hashString, hashName, postSalt } = req.body; // Expect hashString, hashName, and optionally postSalt from SDK event
 
         if (!hashString || !hashName) {
             return res.status(400).json({ message: 'Missing hashString or hashName in request body' });
@@ -21,13 +21,18 @@ exports.generatePayuHash = async (req, res) => {
 
         // The hashString provided by the SDK's generateHash event already contains all necessary parameters
         // (e.g., key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5|||||| for payment hash)
-        // We just need to append the salt and hash it.
-        const hashValue = generateSHA512Hash(hashString + PAYU_SALT);
+        // We need to append the salt and optionally postSalt, then hash it.
+        let stringToHash = hashString + PAYU_SALT;
+        if (postSalt) {
+            stringToHash += postSalt;
+        }
+
+        const hashValue = generateSHA512Hash(stringToHash);
 
         const result = {
-            [hashName]: hashValue // Return only the requested hash with its name
+            [hashName]: hashValue, // Return only the requested hash with its name
         };
-        
+
         console.log('Backend: Generated hash. Sending 200:', result);
         res.status(200).json(result);
 

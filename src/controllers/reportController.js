@@ -1,6 +1,6 @@
 /**
  * Report Controller
- * 
+ *
  * Handles requests related to content reporting features,
  * allowing users to report offensive AI-generated content
  * and administrators to manage those reports.
@@ -22,14 +22,14 @@ async function submitReport(req, res) {
       messageContent,
       reason,
       details,
-      metadata
+      metadata,
     } = req.body;
 
     // Basic validation
     if (!characterId || !messageContent || !reason) {
       return res.status(400).json({
         status: 'error',
-        message: 'Missing required fields: characterId, messageContent, and reason are required'
+        message: 'Missing required fields: characterId, messageContent, and reason are required',
       });
     }
 
@@ -42,7 +42,7 @@ async function submitReport(req, res) {
     if (!characterExists) {
       return res.status(404).json({
         status: 'error',
-        message: 'Character not found'
+        message: 'Character not found',
       });
     }
 
@@ -56,8 +56,8 @@ async function submitReport(req, res) {
       metadata: {
         ...metadata,
         appVersion: req.headers['x-app-version'] || 'unknown',
-        deviceInfo: req.headers['user-agent'] || 'unknown'
-      }
+        deviceInfo: req.headers['user-agent'] || 'unknown',
+      },
     });
 
     // Save the report
@@ -70,14 +70,14 @@ async function submitReport(req, res) {
     return res.status(201).json({
       status: 'success',
       message: 'Report submitted successfully',
-      reportId: report._id
+      reportId: report._id,
     });
   } catch (error) {
     logger.error('Error submitting report:', error);
     return res.status(500).json({
       status: 'error',
       message: 'Failed to submit report',
-      error: error.message
+      error: error.message,
     });
   }
 }
@@ -90,24 +90,24 @@ async function submitReport(req, res) {
 async function getReports(req, res) {
   try {
     const { status, characterId, page = 1, limit = 20 } = req.query;
-    
+
     // Build query based on filters
     const query = {};
-    if (status) query.status = status;
-    if (characterId) query.characterId = characterId;
-    
+    if (status) {query.status = status;}
+    if (characterId) {query.characterId = characterId;}
+
     // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
+
     // Get reports with pagination
     const reports = await Report.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
-    
+
     // Get total count for pagination
     const total = await Report.countDocuments(query);
-    
+
     return res.json({
       status: 'success',
       data: {
@@ -116,16 +116,16 @@ async function getReports(req, res) {
           total,
           page: parseInt(page),
           limit: parseInt(limit),
-          pages: Math.ceil(total / parseInt(limit))
-        }
-      }
+          pages: Math.ceil(total / parseInt(limit)),
+        },
+      },
     });
   } catch (error) {
     logger.error('Error getting reports:', error);
     return res.status(500).json({
       status: 'error',
       message: 'Failed to retrieve reports',
-      error: error.message
+      error: error.message,
     });
   }
 }
@@ -138,26 +138,26 @@ async function getReports(req, res) {
 async function getReportById(req, res) {
   try {
     const { id } = req.params;
-    
+
     const report = await Report.findById(id);
-    
+
     if (!report) {
       return res.status(404).json({
         status: 'error',
-        message: 'Report not found'
+        message: 'Report not found',
       });
     }
-    
+
     return res.json({
       status: 'success',
-      data: report
+      data: report,
     });
   } catch (error) {
     logger.error('Error getting report by ID:', error);
     return res.status(500).json({
       status: 'error',
       message: 'Failed to retrieve report',
-      error: error.message
+      error: error.message,
     });
   }
 }
@@ -171,52 +171,52 @@ async function updateReportStatus(req, res) {
   try {
     const { id } = req.params;
     const { status, resolution, notes } = req.body;
-    
+
     // Validate status
     if (!status || !['pending', 'reviewing', 'resolved', 'dismissed'].includes(status)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid status value'
+        message: 'Invalid status value',
       });
     }
-    
+
     // Find the report
     const report = await Report.findById(id);
-    
+
     if (!report) {
       return res.status(404).json({
         status: 'error',
-        message: 'Report not found'
+        message: 'Report not found',
       });
     }
-    
+
     // Update report status
     report.status = status;
-    
+
     // Update admin review if status is resolved or dismissed
     if (status === 'resolved' || status === 'dismissed') {
       report.adminReview = {
         reviewedBy: req.adminUser?.username || 'admin',
         reviewedAt: new Date(),
         resolution: resolution || status,
-        notes: notes
+        notes: notes,
       };
     }
-    
+
     // Save changes
     await report.save();
-    
+
     return res.json({
       status: 'success',
       message: 'Report status updated successfully',
-      data: report
+      data: report,
     });
   } catch (error) {
     logger.error('Error updating report status:', error);
     return res.status(500).json({
       status: 'error',
       message: 'Failed to update report status',
-      error: error.message
+      error: error.message,
     });
   }
 }
@@ -230,62 +230,62 @@ async function getReportStats(req, res) {
   try {
     // Get counts by status
     const statusCounts = await Report.aggregate([
-      { $group: { _id: '$status', count: { $sum: 1 } } }
+      { $group: { _id: '$status', count: { $sum: 1 } } },
     ]);
-    
+
     // Format status counts
     const statusStats = {};
     statusCounts.forEach(item => {
       statusStats[item._id] = item.count;
     });
-    
+
     // Get counts by reason
     const reasonCounts = await Report.aggregate([
-      { $group: { _id: '$reason', count: { $sum: 1 } } }
+      { $group: { _id: '$reason', count: { $sum: 1 } } },
     ]);
-    
+
     // Format reason counts
     const reasonStats = {};
     reasonCounts.forEach(item => {
       reasonStats[item._id] = item.count;
     });
-    
+
     // Get reports by date (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
+
     const dailyReports = await Report.aggregate([
-      { 
-        $match: { 
-          createdAt: { $gte: thirtyDaysAgo } 
-        } 
+      {
+        $match: {
+          createdAt: { $gte: thirtyDaysAgo },
+        },
       },
       {
         $group: {
-          _id: { 
-            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } 
+          _id: {
+            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
           },
-          count: { $sum: 1 }
-        }
+          count: { $sum: 1 },
+        },
       },
-      { $sort: { _id: 1 } }
+      { $sort: { _id: 1 } },
     ]);
-    
+
     return res.json({
       status: 'success',
       data: {
         totalReports: await Report.countDocuments(),
         statusStats,
         reasonStats,
-        dailyReports
-      }
+        dailyReports,
+      },
     });
   } catch (error) {
     logger.error('Error getting report statistics:', error);
     return res.status(500).json({
       status: 'error',
       message: 'Failed to retrieve report statistics',
-      error: error.message
+      error: error.message,
     });
   }
 }
@@ -295,5 +295,5 @@ module.exports = {
   getReports,
   getReportById,
   updateReportStatus,
-  getReportStats
-}; 
+  getReportStats,
+};

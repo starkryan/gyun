@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
   },
   filename: function(req, file, cb) {
     cb(null, `${Date.now()}-${file.originalname}`);
-  }
+  },
 });
 
 // Create uploads/temp directory if it doesn't exist
@@ -37,12 +37,12 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  }
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
 });
 
 // Debug middleware to inspect form data before multer processes it
@@ -50,7 +50,7 @@ router.use((req, res, next) => {
   if (req.method === 'POST' || req.method === 'PUT') {
     console.log('Form data received in routes:', {
       contentType: req.headers['content-type'],
-      body: req.body
+      body: req.body,
     });
   }
   next();
@@ -59,7 +59,7 @@ router.use((req, res, next) => {
 // Upload middleware for character images
 const characterUpload = upload.fields([
   { name: 'image', maxCount: 1 },
-  { name: 'backgroundImage', maxCount: 1 }
+  { name: 'backgroundImage', maxCount: 1 },
 ]);
 
 // Character routes
@@ -68,21 +68,19 @@ router.get('/featured', characterController.getFeaturedCharacters);
 router.get('/:id', characterController.getCharacterById);
 
 // New routes to serve images directly from the database
-router.get('/:id/image', characterController.getCharacterImage);
-router.get('/:id/background', characterController.getCharacterBackgroundImage);
 
 // Add debug middleware before character creation
 router.post('/', (req, res, next) => {
-  console.log('CHARACTER CREATE - Pre-multer:', { 
+  console.log('CHARACTER CREATE - Pre-multer:', {
     contentType: req.headers['content-type'],
     body: req.body,
-    files: req.files
+    files: req.files,
   });
   next();
 }, characterUpload, (req, res, next) => {
-  console.log('CHARACTER CREATE - Post-multer:', { 
+  console.log('CHARACTER CREATE - Post-multer:', {
     body: req.body,
-    files: req.files
+    files: req.files,
   });
   next();
 }, characterController.createCharacter);
@@ -91,4 +89,4 @@ router.put('/:id', characterUpload, characterController.updateCharacter);
 router.delete('/:id', characterController.deleteCharacter);
 router.delete('/:id/permanent', characterController.permanentDeleteCharacter);
 
-module.exports = router; 
+module.exports = router;

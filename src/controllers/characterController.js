@@ -42,18 +42,18 @@ exports.getAllCharacters = async (req, res) => {
         style: 1, // Assuming style might be needed for frontend Profile interface
       }
     ).sort({ createdAt: -1 });
-    
+
     // Get server base URL for API endpoints
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    
+
     // Transform data to match the format expected by the React Native app
     const transformedCharacters = characters.map(char => ({
       id: char.id,
       name: char.name,
       description: char.description,
       personality: char.personality,
-      image: { uri: char.imageUrl || `${baseUrl}/api/characters/${char.id}/image` },
-      backgroundImage: { uri: char.backgroundImageUrl || `${baseUrl}/api/characters/${char.id}/background` },
+      image: { uri: char.imageUrl },
+      backgroundImage: { uri: char.backgroundImageUrl },
       accentColor: char.accentColor,
       textColor: char.textColor,
       age: char.age,
@@ -64,7 +64,7 @@ exports.getAllCharacters = async (req, res) => {
       isPremium: char.isPremium,
       style: char.style,
     }));
-    
+
     res.status(200).json(transformedCharacters);
   } catch (error) {
     console.error('Error getting characters:', error);
@@ -76,31 +76,31 @@ exports.getAllCharacters = async (req, res) => {
 exports.getCharacterById = async (req, res) => {
   try {
     const character = await Character.findOne({ id: req.params.id, isActive: true });
-    
+
     if (!character) {
       return res.status(404).json({ message: 'Character not found' });
     }
-    
+
     // Get server base URL for API endpoints
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    
+
     // Transform to match React Native format
     const transformedCharacter = {
       id: character.id,
       name: character.name,
       description: character.description,
       personality: character.personality,
-      image: { uri: character.imageUrl || `${baseUrl}/api/characters/${character.id}/image` },
-      backgroundImage: { uri: character.backgroundImageUrl || `${baseUrl}/api/characters/${character.id}/background` },
+      image: { uri: character.imageUrl },
+      backgroundImage: { uri: character.backgroundImageUrl },
       accentColor: character.accentColor,
       textColor: character.textColor,
       age: character.age,
       location: character.location,
       responseTime: character.responseTime,
       traits: character.traits,
-      interests: character.interests
+      interests: character.interests,
     };
-    
+
     res.status(200).json(transformedCharacter);
   } catch (error) {
     console.error('Error getting character:', error);
@@ -115,18 +115,18 @@ exports.createCharacter = async (req, res) => {
     console.log('- Headers:', req.headers);
     console.log('- Body:', req.body);
     console.log('- Files:', req.files);
-    
+
     let {
-      name, 
-      description, 
-      personality, 
-      accentColor, 
-      textColor, 
-      age, 
-      location, 
-      responseTime, 
-      traits, 
-      interests 
+      name,
+      description,
+      personality,
+      accentColor,
+      textColor,
+      age,
+      location,
+      responseTime,
+      traits,
+      interests,
     } = req.body;
 
     // Parse traits and interests if they're JSON strings
@@ -153,7 +153,7 @@ exports.createCharacter = async (req, res) => {
       description,
       personality,
       hasFiles: !!req.files,
-      hasImage: req.files && !!req.files.image
+      hasImage: req.files && !!req.files.image,
     });
 
     // Validate required fields
@@ -161,7 +161,7 @@ exports.createCharacter = async (req, res) => {
       console.log('Validation failed! Missing required fields:', {
         hasName: !!name,
         hasDescription: !!description,
-        hasPersonality: !!personality
+        hasPersonality: !!personality,
       });
       return res.status(400).json({ message: 'Please provide name, description, and personality' });
     }
@@ -170,25 +170,25 @@ exports.createCharacter = async (req, res) => {
     if (!req.files || !req.files.image) {
       console.log('Image validation failed!', {
         hasFiles: !!req.files,
-        filesKeys: req.files ? Object.keys(req.files) : []
+        filesKeys: req.files ? Object.keys(req.files) : [],
       });
       return res.status(400).json({ message: 'Character image is required' });
     }
 
     // Process the image file
     const image = req.files.image[0];
-    
+
     // Generate a shorter numeric ID instead of UUID
     const characterId = generateShortId();
-    
+
     // Get server base URL for API endpoints
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    
+
     // Try to upload to Bunny.net first, fall back to local storage if it fails
     let imageUrl;
     try {
       imageUrl = await bunnyStorage.processAndUploadCharacterImage(
-        image.path, 
+        image.path,
         characterId,
         false, // not a background image
         { width: 400, height: 400 }
@@ -199,7 +199,7 @@ exports.createCharacter = async (req, res) => {
       try {
         // Fall back to local storage
         imageUrl = await localStorage.processAndSaveCharacterImage(
-          image.path, 
+          image.path,
           characterId,
           false,
           { width: 400, height: 400 }
@@ -212,7 +212,7 @@ exports.createCharacter = async (req, res) => {
         return res.status(500).json({ message: 'Failed to upload image' });
       }
     }
-    
+
     // Upload the background image to Bunny.net if provided
     let backgroundImageUrl = null;
     if (req.files.backgroundImage && req.files.backgroundImage[0]) {
@@ -229,7 +229,7 @@ exports.createCharacter = async (req, res) => {
         try {
           // Fall back to local storage
           backgroundImageUrl = await localStorage.processAndSaveCharacterImage(
-            req.files.backgroundImage[0].path, 
+            req.files.backgroundImage[0].path,
             characterId,
             true,
             { width: 1200, height: 800 }
@@ -243,25 +243,25 @@ exports.createCharacter = async (req, res) => {
         }
       }
     }
-    
+
     // Delete temporary files after processing
     if (fs.existsSync(image.path)) {
       fs.unlinkSync(image.path);
     }
-    
-    if (req.files.backgroundImage && req.files.backgroundImage[0] && 
+
+    if (req.files.backgroundImage && req.files.backgroundImage[0] &&
         fs.existsSync(req.files.backgroundImage[0].path)) {
       fs.unlinkSync(req.files.backgroundImage[0].path);
     }
-    
+
     // Create new character with image URLs
     const character = new Character({
       id: characterId,
       name,
       description,
       personality,
-      imageUrl,
-      backgroundImageUrl: backgroundImageUrl || null, // Only store URL, not a default API endpoint
+      imageUrl: imageUrl,
+      backgroundImageUrl: backgroundImageUrl,
       accentColor: accentColor || '#ec4899',
       textColor: textColor || '#ffffff',
       age,
@@ -269,11 +269,11 @@ exports.createCharacter = async (req, res) => {
       responseTime: responseTime || '< 1 min',
       traits: traits || [],
       interests: interests || [],
-      
+
     });
-    
+
     await character.save();
-    
+
     // Transform to match React Native format
     const transformedCharacter = {
       id: character.id,
@@ -281,16 +281,16 @@ exports.createCharacter = async (req, res) => {
       description: character.description,
       personality: character.personality,
       image: { uri: character.imageUrl },
-      backgroundImage: { uri: character.backgroundImageUrl || `${baseUrl}/api/characters/${character.id}/background` },
+      backgroundImage: { uri: character.backgroundImageUrl },
       accentColor: character.accentColor,
       textColor: character.textColor,
       age: character.age,
       location: character.location,
       responseTime: character.responseTime,
       traits: character.traits,
-      interests: character.interests
+      interests: character.interests,
     };
-    
+
     res.status(201).json(transformedCharacter);
   } catch (error) {
     console.error('Error creating character:', error);
@@ -302,19 +302,19 @@ exports.createCharacter = async (req, res) => {
 exports.updateCharacter = async (req, res) => {
   try {
     const characterId = req.params.id;
-    let { 
-      name, 
-      description, 
-      personality, 
-      accentColor, 
-      textColor, 
-      age, 
-      location, 
-      responseTime, 
-      traits, 
-      interests 
+    let {
+      name,
+      description,
+      personality,
+      accentColor,
+      textColor,
+      age,
+      location,
+      responseTime,
+      traits,
+      interests,
     } = req.body;
-    
+
     // Parse traits and interests if they're JSON strings
     if (traits && typeof traits === 'string') {
       try {
@@ -333,28 +333,28 @@ exports.updateCharacter = async (req, res) => {
         interests = interests.split(',').map(i => i.trim());
       }
     }
-    
+
     const character = await Character.findOne({ id: characterId });
-    
+
     if (!character) {
       return res.status(404).json({ message: 'Character not found' });
     }
-    
+
     // Update text fields
-    if (name) character.name = name;
-    if (description) character.description = description;
-    if (personality) character.personality = personality;
-    if (accentColor) character.accentColor = accentColor;
-    if (textColor) character.textColor = textColor;
-    if (age) character.age = age;
-    if (location) character.location = location;
-    if (responseTime) character.responseTime = responseTime;
-    if (traits) character.traits = traits;
-    if (interests) character.interests = interests;
-    
+    if (name) {character.name = name;}
+    if (description) {character.description = description;}
+    if (personality) {character.personality = personality;}
+    if (accentColor) {character.accentColor = accentColor;}
+    if (textColor) {character.textColor = textColor;}
+    if (age) {character.age = age;}
+    if (location) {character.location = location;}
+    if (responseTime) {character.responseTime = responseTime;}
+    if (traits) {character.traits = traits;}
+    if (interests) {character.interests = interests;}
+
     // Get server base URL
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    
+
     // Update image if provided
     if (req.files && req.files.image && req.files.image[0]) {
       try {
@@ -365,7 +365,7 @@ exports.updateCharacter = async (req, res) => {
           false, // not a background image
           { width: 400, height: 400 }
         );
-        
+
         // Update the image URL in the character
         character.imageUrl = newImageUrl;
         console.log(`Updated profile image for character ${characterId}:`, newImageUrl);
@@ -374,7 +374,7 @@ exports.updateCharacter = async (req, res) => {
         try {
           // Fall back to local storage
           const localImageUrl = await localStorage.processAndSaveCharacterImage(
-            req.files.image[0].path, 
+            req.files.image[0].path,
             characterId,
             false,
             { width: 400, height: 400 }
@@ -393,7 +393,7 @@ exports.updateCharacter = async (req, res) => {
         }
       }
     }
-    
+
     // Update background image if provided
     if (req.files && req.files.backgroundImage && req.files.backgroundImage[0]) {
       try {
@@ -404,7 +404,7 @@ exports.updateCharacter = async (req, res) => {
           true, // is a background image
           { width: 1200, height: 800 }
         );
-        
+
         // Update the background image URL in the character
         character.backgroundImageUrl = newBgImageUrl;
         console.log(`Updated background image for character ${characterId}:`, newBgImageUrl);
@@ -413,7 +413,7 @@ exports.updateCharacter = async (req, res) => {
         try {
           // Fall back to local storage
           const localBgImageUrl = await localStorage.processAndSaveCharacterImage(
-            req.files.backgroundImage[0].path, 
+            req.files.backgroundImage[0].path,
             characterId,
             true,
             { width: 1200, height: 800 }
@@ -432,13 +432,13 @@ exports.updateCharacter = async (req, res) => {
         }
       }
     }
-    
+
     // Update timestamp
     character.updatedAt = Date.now();
-    
+
     // Save the updated character
     await character.save();
-    
+
     // Transform to match React Native format
     const transformedCharacter = {
       id: character.id,
@@ -446,16 +446,16 @@ exports.updateCharacter = async (req, res) => {
       description: character.description,
       personality: character.personality,
       image: { uri: character.imageUrl },
-      backgroundImage: { uri: character.backgroundImageUrl || `${baseUrl}/api/characters/${character.id}/background` },
+      backgroundImage: { uri: character.backgroundImageUrl },
       accentColor: character.accentColor,
       textColor: character.textColor,
       age: character.age,
       location: character.location,
       responseTime: character.responseTime,
       traits: character.traits,
-      interests: character.interests
+      interests: character.interests,
     };
-    
+
     res.status(200).json(transformedCharacter);
   } catch (error) {
     console.error('Error updating character:', error);
@@ -467,16 +467,16 @@ exports.updateCharacter = async (req, res) => {
 exports.deleteCharacter = async (req, res) => {
   try {
     const character = await Character.findOne({ id: req.params.id });
-    
+
     if (!character) {
       return res.status(404).json({ message: 'Character not found' });
     }
-    
+
     // Soft delete
     character.isActive = false;
     character.updatedAt = Date.now();
     await character.save();
-    
+
     res.status(200).json({ message: 'Character deleted successfully' });
   } catch (error) {
     console.error('Error deleting character:', error);
@@ -488,15 +488,15 @@ exports.deleteCharacter = async (req, res) => {
 exports.permanentDeleteCharacter = async (req, res) => {
   try {
     const character = await Character.findOne({ id: req.params.id });
-    
+
     if (!character) {
       return res.status(404).json({ message: 'Character not found' });
     }
-    
+
     // Delete the character from the database
     // This will delete all associated data including image data
     await Character.deleteOne({ id: req.params.id });
-    
+
     res.status(200).json({ message: 'Character permanently deleted' });
   } catch (error) {
     console.error('Error permanently deleting character:', error);
@@ -510,29 +510,29 @@ exports.getFeaturedCharacters = async (req, res) => {
     // Get 3 random characters
     const characters = await Character.aggregate([
       { $match: { isActive: true } },
-      { $sample: { size: 3 } }
+      { $sample: { size: 3 } },
     ]);
-    
+
     // Get server base URL for API endpoints
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    
+
     // Transform data to match the format expected by the React Native app
     const transformedCharacters = characters.map(char => ({
       id: char.id,
       name: char.name,
       description: char.description,
       personality: char.personality,
-      image: { uri: char.imageUrl || `${baseUrl}/api/characters/${char.id}/image` },
-      backgroundImage: { uri: char.backgroundImageUrl || `${baseUrl}/api/characters/${char.id}/background` },
+      image: { uri: char.imageUrl },
+      backgroundImage: { uri: char.backgroundImageUrl },
       accentColor: char.accentColor,
       textColor: char.textColor,
       age: char.age,
       location: char.location,
       responseTime: char.responseTime,
       traits: char.traits,
-      interests: char.interests
+      interests: char.interests,
     }));
-    
+
     res.status(200).json(transformedCharacters);
   } catch (error) {
     console.error('Error getting featured characters:', error);
@@ -540,68 +540,3 @@ exports.getFeaturedCharacters = async (req, res) => {
   }
 };
 
-// Serve character profile image
-exports.getCharacterImage = async (req, res) => {
-  try {
-    const character = await Character.findOne({ id: req.params.id, isActive: true });
-    
-    if (!character) {
-      return res.status(404).json({ message: 'Character not found' });
-    }
-    
-    // If the character has a direct URL for the image, redirect to it
-    if (character.imageUrl && character.imageUrl.startsWith('http')) {
-      return res.redirect(character.imageUrl);
-    } else if (character.imageUrl) {
-      // If it's a local URL (not starting with http), prepend the base URL
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      return res.redirect(character.imageUrl.startsWith('/') ? baseUrl + character.imageUrl : baseUrl + '/' + character.imageUrl);
-    }
-    
-    // No image URL available
-    return res.status(404).json({ message: 'Character image not found' });
-  } catch (error) {
-    console.error('Error retrieving character image:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-// Serve character background image (using profile image as fallback)
-exports.getCharacterBackgroundImage = async (req, res) => {
-  try {
-    const character = await Character.findOne({ id: req.params.id, isActive: true });
-    
-    if (!character) {
-      return res.status(404).json({ message: 'Character not found' });
-    }
-    
-    // Get server base URL for local paths
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    
-    // If the character has a direct URL for the background image, redirect to it
-    if (character.backgroundImageUrl && character.backgroundImageUrl.startsWith('http')) {
-      return res.redirect(character.backgroundImageUrl);
-    } else if (character.backgroundImageUrl) {
-      // If it's a local URL (not starting with http), prepend the base URL
-      return res.redirect(character.backgroundImageUrl.startsWith('/') ? 
-        baseUrl + character.backgroundImageUrl : 
-        baseUrl + '/' + character.backgroundImageUrl);
-    }
-    
-    // Use the profile image as fallback
-    if (character.imageUrl && character.imageUrl.startsWith('http')) {
-      return res.redirect(character.imageUrl);
-    } else if (character.imageUrl) {
-      // If the profile image URL is local, prepend the base URL
-      return res.redirect(character.imageUrl.startsWith('/') ? 
-        baseUrl + character.imageUrl : 
-        baseUrl + '/' + character.imageUrl);
-    }
-    
-    // No image available
-    return res.status(404).json({ message: 'Character image not found' });
-  } catch (error) {
-    console.error('Error retrieving character background image:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};

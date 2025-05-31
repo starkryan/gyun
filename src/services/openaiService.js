@@ -1,6 +1,6 @@
 /**
  * DeepSeek API Service
- * 
+ *
  * Handles API calls to DeepSeek for AI-generated character responses
  * using the OpenAI compatible API
  */
@@ -11,7 +11,7 @@ let OpenAI;
     // Don't log that we're importing OpenAI
     const openaiModule = await import('openai');
     OpenAI = openaiModule.default;
-    
+
     // Initialize the client after successful import
     initializeOpenAIClient();
   } catch (error) {
@@ -28,45 +28,45 @@ function setupMockOpenAI() {
     constructor() {
       // No logging constructor creation
     }
-    
+
     chat = {
       completions: {
         create: async () => {
           return {
             choices: [{
               message: {
-                content: "I'm having trouble connecting right now. Please try again later."
-              }
+                content: "I'm having trouble connecting right now. Please try again later.",
+              },
             }],
             usage: {
               prompt_tokens: 0,
               completion_tokens: 0,
-              total_tokens: 0
-            }
+              total_tokens: 0,
+            },
           };
-        }
-      }
+        },
+      },
     };
-    
+
     models = {
       list: async () => {
         return {
-          data: []
+          data: [],
         };
-      }
+      },
     };
-    
+
     images = {
       generate: async () => {
         return {
           data: [{
-            url: "https://placehold.co/600x400?text=Image+Generation+Failed"
-          }]
+            url: 'https://placehold.co/600x400?text=Image+Generation+Failed',
+          }],
         };
-      }
+      },
     };
   };
-  
+
   // Initialize the client with mock OpenAI
   initializeOpenAIClient();
 }
@@ -82,7 +82,7 @@ try {
     error: console.error,
     warn: console.warn,
     info: console.info,
-    debug: console.debug
+    debug: console.debug,
   };
 }
 
@@ -99,7 +99,7 @@ try {
     temperature: 0.7,
     topP: 1.0,
     frequencyPenalty: 0,
-    presencePenalty: 0
+    presencePenalty: 0,
   };
 }
 
@@ -110,7 +110,7 @@ function initializeOpenAIClient() {
   try {
     openai = new OpenAI({
       apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY,
-      baseURL: 'https://api.deepseek.com'
+      baseURL: 'https://api.deepseek.com',
     });
     logger.info('AI client initialized');
   } catch (error) {
@@ -123,34 +123,34 @@ function initializeOpenAIClient() {
             return {
               choices: [{
                 message: {
-                  content: "I'm having trouble connecting right now. Please try again later."
-                }
+                  content: "I'm having trouble connecting right now. Please try again later.",
+                },
               }],
               usage: {
                 prompt_tokens: 0,
                 completion_tokens: 0,
-                total_tokens: 0
-              }
+                total_tokens: 0,
+              },
             };
-          }
-        }
+          },
+        },
       },
       models: {
         list: async () => {
           return {
-            data: []
+            data: [],
           };
-        }
+        },
       },
       images: {
         generate: async () => {
           return {
             data: [{
-              url: "https://placehold.co/600x400?text=Image+Generation+Failed"
-            }]
+              url: 'https://placehold.co/600x400?text=Image+Generation+Failed',
+            }],
           };
-        }
-      }
+        },
+      },
     };
   }
 }
@@ -188,11 +188,11 @@ function initializeOpenAIClient() {
  * @returns {string} - Masked content
  */
 function maskSensitiveContent(content) {
-  if (!content) return '[empty]';
-  if (typeof content !== 'string') return '[non-string content]';
-  
+  if (!content) {return '[empty]';}
+  if (typeof content !== 'string') {return '[non-string content]';}
+
   // Return the first 10 characters followed by "..."
-  if (content.length <= 10) return content;
+  if (content.length <= 10) {return content;}
   return content.substring(0, 10) + '...';
 }
 
@@ -206,7 +206,7 @@ async function generateResponse(messages, options = {}) {
   try {
     // Get the model from options or use the default
     const model = options.model || config.defaultModel;
-    
+
     // Set up completion parameters
     const completionParams = {
       model: model,
@@ -219,25 +219,25 @@ async function generateResponse(messages, options = {}) {
     };
 
     // No verbose API logging - just log that a request is being made
-    logger.info(`Making AI request`);
-    
+    logger.info('Making AI request');
+
     // Check if uncensored mode is enabled
     const useUncensoredMode = options.uncensored !== false; // Default to true
-    
+
     // Apply the appropriate headers based on mode
     const headers = useUncensoredMode ? config.requestHeaders.uncensored : config.requestHeaders.default;
-    
+
     // Make the API call to OpenAI with appropriate headers
     const completion = await openai.chat.completions.create(completionParams, { headers });
-    
+
     // Only log minimal information - no token counts
-    logger.info(`AI request completed successfully`);
-    
+    logger.info('AI request completed successfully');
+
     // Return the text of the first response
     return completion.choices[0].message.content;
   } catch (error) {
     logger.error('Error in AI request');
-    
+
     // Re-throw the error to be handled by the caller
     throw error;
   }
@@ -251,17 +251,17 @@ async function checkHealth() {
   try {
     // Simple request to test the API
     const response = await openai.models.list();
-    
+
     return {
       status: 'healthy',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   } catch (error) {
     logger.error('AI health check failed');
-    
+
     return {
       status: 'unhealthy',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 }
@@ -275,11 +275,11 @@ async function getAvailableModels() {
     const response = await openai.models.list();
     return response.data.map(model => ({
       id: model.id,
-      created: model.created
+      created: model.created,
     }));
   } catch (error) {
     logger.error('Error fetching AI models');
-    throw new Error(`Failed to fetch available models`);
+    throw new Error('Failed to fetch available models');
   }
 }
 
@@ -294,13 +294,13 @@ async function generateImage(prompt) {
       prompt: prompt,
       n: 1,
       size: '1024x1024',
-      response_format: 'url'
+      response_format: 'url',
     });
-    
+
     return response.data[0].url;
   } catch (error) {
     logger.error('Error generating image');
-    throw new Error(`Failed to generate image`);
+    throw new Error('Failed to generate image');
   }
 }
 
@@ -308,5 +308,5 @@ module.exports = {
   generateResponse,
   checkHealth,
   getAvailableModels,
-  generateImage
-}; 
+  generateImage,
+};

@@ -1,10 +1,10 @@
 /**
  * MongoDB Connection Test Script
- * 
+ *
  * This script tests connections to both local and cloud MongoDB instances
  * and displays detailed information about the connections.
- * 
- * Usage: 
+ *
+ * Usage:
  *   node src/scripts/testMongoConnection.js
  */
 
@@ -25,7 +25,7 @@ const mongoOptions = {
   connectTimeoutMS: 10000,
   socketTimeoutMS: 45000,
   maxPoolSize: 10,
-  minPoolSize: 2
+  minPoolSize: 2,
 };
 
 /**
@@ -36,23 +36,23 @@ const mongoOptions = {
 async function testConnection(uri, name) {
   console.log(`\n🧪 Testing ${name} MongoDB connection...`);
   console.log(`URI: ${uri.replace(/:[^:\/]+@/, ':****@')}`); // Hide password in logs
-  
+
   try {
     const connection = await mongoose.createConnection(uri, mongoOptions);
     console.log(`✅ Connected to ${name} MongoDB successfully!`);
-    
+
     // Get database details
     const dbName = connection.db.databaseName;
     console.log(`📊 Database: ${dbName}`);
-    
+
     // Get database stats
     const stats = await connection.db.stats();
     console.log(`📈 Stats: ${JSON.stringify(stats, null, 2)}`);
-    
+
     // List collections
     const collections = await connection.db.listCollections().toArray();
     console.log(`📚 Collections (${collections.length}):`);
-    
+
     if (collections.length > 0) {
       for (const collection of collections) {
         try {
@@ -65,17 +65,17 @@ async function testConnection(uri, name) {
     } else {
       console.log('   No collections found');
     }
-    
+
     // Close connection
     await connection.close();
     console.log(`✅ ${name} MongoDB connection closed successfully`);
-    
+
     return true;
   } catch (error) {
     console.error(`❌ ${name} MongoDB connection failed:`);
     console.error(`   Error type: ${error.name}`);
     console.error(`   Message: ${error.message}`);
-    
+
     // More detailed error diagnostics
     if (uri.includes('mongodb+srv')) {
       console.error('Cloud connection error details:');
@@ -95,7 +95,7 @@ async function testConnection(uri, name) {
         console.error('  - Run: sudo systemctl status mongodb');
       }
     }
-    
+
     return false;
   }
 }
@@ -105,29 +105,29 @@ async function testConnection(uri, name) {
  */
 async function main() {
   console.log('=== MongoDB Connection Test ===');
-  
+
   let localSuccess = false;
   let cloudSuccess = false;
-  
+
   try {
     // Test local connection
     localSuccess = await testConnection(LOCAL_MONGODB_URI, 'Local');
-    
+
     // Test cloud connection if MONGODB_URI is set
     if (CLOUD_MONGODB_URI) {
       cloudSuccess = await testConnection(CLOUD_MONGODB_URI, 'Cloud');
     } else {
       console.error('❌ Cloud MongoDB URI is not set in .env file');
     }
-    
+
     // Summary
     console.log('\n=== Connection Test Summary ===');
     console.log(`Local MongoDB: ${localSuccess ? '✅ Connected' : '❌ Failed'}`);
     console.log(`Cloud MongoDB: ${cloudSuccess ? '✅ Connected' : '❌ Failed'}`);
-    
+
     // Provide next steps based on results
     console.log('\n=== Next Steps ===');
-    
+
     if (localSuccess && cloudSuccess) {
       console.log('✅ Both connections successful! You can proceed with data migration.');
       console.log('   Run: node src/scripts/migrateToCloud.js');
@@ -141,7 +141,7 @@ async function main() {
     } else {
       console.log('❌ Both connections failed. Please resolve connection issues before proceeding.');
     }
-    
+
   } catch (error) {
     console.error('❌ Unexpected error:', error);
   } finally {
@@ -151,4 +151,4 @@ async function main() {
 }
 
 // Run the main function
-main(); 
+main();

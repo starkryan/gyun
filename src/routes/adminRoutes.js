@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
   },
   filename: function(req, file, cb) {
     cb(null, `${Date.now()}-${file.originalname}`);
-  }
+  },
 });
 
 // File filter to only allow images
@@ -35,18 +35,18 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  }
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
 });
 
 // Upload middleware for character images
 const characterUpload = upload.fields([
   { name: 'image', maxCount: 1 },
-  { name: 'backgroundImage', maxCount: 1 }
+  { name: 'backgroundImage', maxCount: 1 },
 ]);
 
 // Authentication
@@ -58,16 +58,16 @@ router.get('/characters', adminAuth, adminController.getAllCharacters);
 
 // Add debug middleware and Multer for character creation
 router.post('/characters', adminAuth, (req, res, next) => {
-  console.log('ADMIN CHARACTER CREATE - Pre-multer:', { 
+  console.log('ADMIN CHARACTER CREATE - Pre-multer:', {
     contentType: req.headers['content-type'],
     body: req.body,
-    files: req.files
+    files: req.files,
   });
   next();
 }, characterUpload, (req, res, next) => {
-  console.log('ADMIN CHARACTER CREATE - Post-multer:', { 
+  console.log('ADMIN CHARACTER CREATE - Post-multer:', {
     body: req.body,
-    files: req.files
+    files: req.files,
   });
   next();
 }, adminController.createCharacter);
@@ -113,29 +113,29 @@ router.get('/status', async (req, res) => {
     let gitInfo = {};
     try {
       const rootDir = path.resolve(__dirname, '../..');
-      
+
       // Get current branch
-      const branch = execSync('git rev-parse --abbrev-ref HEAD', { 
-        cwd: rootDir, 
-        encoding: 'utf8' 
+      const branch = execSync('git rev-parse --abbrev-ref HEAD', {
+        cwd: rootDir,
+        encoding: 'utf8',
       }).trim();
-      
+
       // Get last commit
-      const lastCommit = execSync('git log -1 --pretty=format:"%h - %s (%cr)"', { 
-        cwd: rootDir, 
-        encoding: 'utf8' 
+      const lastCommit = execSync('git log -1 --pretty=format:"%h - %s (%cr)"', {
+        cwd: rootDir,
+        encoding: 'utf8',
       }).trim();
-      
+
       // Get commit count
-      const commitCount = execSync('git rev-list --count HEAD', { 
-        cwd: rootDir, 
-        encoding: 'utf8' 
+      const commitCount = execSync('git rev-list --count HEAD', {
+        cwd: rootDir,
+        encoding: 'utf8',
       }).trim();
-      
+
       gitInfo = {
         branch,
         lastCommit,
-        commitCount
+        commitCount,
       };
     } catch (error) {
       gitInfo = { error: 'Git information unavailable' };
@@ -209,4 +209,4 @@ router.get('/models', async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

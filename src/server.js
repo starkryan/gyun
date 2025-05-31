@@ -1,9 +1,9 @@
 /**
  * Chumzr Backend Server
- * 
+ *
  * Main entry point for the Chumzr backend application.
  * Configured for deployment on Render.com.
- * 
+ *
  * IMPORTANT: This application now uses DeepSeek API instead of OpenAI.
  * The DeepSeek API is compatible with the OpenAI SDK but requires setting
  * the baseURL to https://api.deepseek.com and using the model "deepseek-chat".
@@ -66,54 +66,54 @@ app.use(cookieParser());
 // Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
-  
+
   // Log when the request completes
   res.on('finish', () => {
     const duration = Date.now() - start;
     const logMessage = `${req.method} ${req.url} ${res.statusCode} ${duration}ms`;
-    
+
     if (res.statusCode >= 400) {
       logger.warn(logMessage);
     } else {
       logger.info(logMessage);
     }
   });
-  
+
   // Skip logging request bodies for sensitive endpoints
   const sensitiveEndpoints = [
     '/api/ai/character/response',
     '/character/response',
     '/api/characters',
-    '/api/ai/character'
+    '/api/ai/character',
   ];
-  
+
   const isSensitiveEndpoint = sensitiveEndpoints.some(endpoint => req.url.includes(endpoint));
-  
+
   // Only log request bodies in development and for non-sensitive endpoints
   if (!isProduction && !isSensitiveEndpoint && (req.method === 'POST' || req.method === 'PUT')) {
     // Mask potential sensitive data in the request body
     const sanitizedBody = req.body ? { ...req.body } : {};
-    
+
     // Mask potential sensitive fields
-    if (sanitizedBody.message) sanitizedBody.message = '[CONTENT MASKED]';
-    if (sanitizedBody.conversation) sanitizedBody.conversation = '[CONVERSATION MASKED]';
-    if (sanitizedBody.messages) sanitizedBody.messages = '[MESSAGES MASKED]';
-    if (sanitizedBody.content) sanitizedBody.content = '[CONTENT MASKED]';
-    
+    if (sanitizedBody.message) {sanitizedBody.message = '[CONTENT MASKED]';}
+    if (sanitizedBody.conversation) {sanitizedBody.conversation = '[CONVERSATION MASKED]';}
+    if (sanitizedBody.messages) {sanitizedBody.messages = '[MESSAGES MASKED]';}
+    if (sanitizedBody.content) {sanitizedBody.content = '[CONTENT MASKED]';}
+
     logger.debug('Request Body:', sanitizedBody);
     if (req.files) {
       const fileInfo = Object.keys(req.files).reduce((acc, key) => {
-        acc[key] = { 
+        acc[key] = {
           name: req.files[key].name,
           size: req.files[key].size,
-          mimetype: req.files[key].mimetype
+          mimetype: req.files[key].mimetype,
         };
         return acc;
       }, {});
       logger.debug('Request Files:', fileInfo);
     }
   }
-  
+
   next();
 });
 
@@ -155,16 +155,16 @@ app.get('/api/db-status', async (req, res) => {
         status: 'error',
         message: 'MongoDB is not connected',
         readyState: mongoose.connection.readyState,
-        readyStateDesc: ['disconnected', 'connected', 'connecting', 'disconnecting'][mongoose.connection.readyState]
+        readyStateDesc: ['disconnected', 'connected', 'connecting', 'disconnecting'][mongoose.connection.readyState],
       });
     }
-    
+
     // Basic connectivity test
     const stats = await mongoose.connection.db.stats();
-    
+
     // Get current database name
     const dbName = mongoose.connection.db.databaseName;
-    
+
     // Return success with basic stats
     return res.json({
       status: 'success',
@@ -179,15 +179,15 @@ app.get('/api/db-status', async (req, res) => {
         dataSize: stats.dataSize,
         storageSize: stats.storageSize,
         indexes: stats.indexes,
-        indexSize: stats.indexSize
-      }
+        indexSize: stats.indexSize,
+      },
     });
   } catch (error) {
     logger.error('Error checking MongoDB status:', error);
     return res.status(500).json({
       status: 'error',
       message: 'Error checking MongoDB status',
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -206,11 +206,11 @@ app.get('/api/health', (req, res) => {
     ip: req.ip,
     protocol: req.protocol,
     host: req.get('host'),
-    originalUrl: req.originalUrl
+    originalUrl: req.originalUrl,
   };
-  
+
   logger.info(`Health check requested from: ${req.ip}`);
-  
+
   // Don't log sensitive headers
   const sanitizedRequestInfo = { ...requestInfo };
   if (process.env.NODE_ENV === 'development') {
@@ -226,9 +226,9 @@ app.get('/api/health', (req, res) => {
     sanitizedRequestInfo.headers = sanitizedHeaders;
     logger.info(`Health check request details: ${JSON.stringify(sanitizedRequestInfo)}`);
   }
-  
-  const healthData = { 
-    status: 'ok', 
+
+  const healthData = {
+    status: 'ok',
     message: 'Server is running',
     environment: NODE_ENV,
     mongoConnection: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
@@ -237,9 +237,9 @@ app.get('/api/health', (req, res) => {
     hostname: require('os').hostname(),
     port: PORT,
     nodeVersion: process.version,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
-  
+
   logger.info(`Health check response: ${JSON.stringify(healthData)}`);
   res.status(200).json(healthData);
 });
@@ -263,28 +263,28 @@ app.get('/api-docs', (req, res) => {
 app.use((req, res, next) => {
   res.status(404).json({
     status: 'error',
-    message: `Route ${req.originalUrl} not found`
+    message: `Route ${req.originalUrl} not found`,
   });
 });
 
 // Error handler
 app.use((err, req, res, next) => {
   logger.error(`Error processing ${req.method} ${req.url}:`, err);
-  
+
   // Handle timeout errors
   if (req.timedout) {
     return res.status(503).json({
       status: 'error',
       message: 'Request timeout',
-      code: 'TIMEOUT'
+      code: 'TIMEOUT',
     });
   }
-  
+
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
     status: 'error',
     message: err.message || 'Internal server error',
-    ...(isProduction ? {} : { stack: err.stack })
+    ...(isProduction ? {} : { stack: err.stack }),
   });
 });
 
@@ -312,7 +312,7 @@ const mongoOptions = {
 const connectWithRetry = () => {
   logger.info('Attempting to connect to MongoDB...');
   const isCloudConnection = process.env.MONGODB_URI && process.env.MONGODB_URI.includes('mongodb+srv');
-  
+
   if (isCloudConnection) {
     logger.info('Using cloud MongoDB connection');
     logger.info(`Connection string: ${process.env.MONGODB_URI.replace(/:[^:\/]+@/, ':****@')}`);
@@ -320,7 +320,7 @@ const connectWithRetry = () => {
     logger.info('Using local MongoDB connection');
     logger.warn('No MONGODB_URI environment variable found or not using cloud connection. This will fail on Railway.');
   }
-  
+
   mongoose
     .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/lomu', mongoOptions)
     .then(() => {
@@ -330,24 +330,24 @@ const connectWithRetry = () => {
         setTimeout(connectWithRetry, 5000);
         return;
       }
-      
+
       try {
         const dbName = mongoose.connection.db.databaseName;
         logger.info('🟢 MongoDB connection established');
         logger.info(`✅ Connected to MongoDB database: ${dbName}`);
-        
+
         // Start server only after successful MongoDB connection
         const server = app.listen(PORT, '0.0.0.0', () => {
           const isRailway = process.env.RAILWAY_SERVICE_ID !== undefined;
           const baseUrl = isRailway ? 'https://legabhai.up.railway.app' : `http://localhost:${PORT}`;
-          
+
           logger.info(`✅ Server running on port ${PORT} in ${NODE_ENV} mode`);
           logger.info(`🌐 Server address: ${server.address().address}:${server.address().port}`);
           logger.info(`🔗 API Health Check: ${baseUrl}/api/health`);
           logger.info(`📚 API Docs: ${baseUrl}/api-docs`);
           logger.info(`👑 Admin Dashboard: ${baseUrl}/admin`);
         });
-        
+
         // Handle server errors
         server.on('error', (error) => {
           if (error.code === 'EADDRINUSE') {
@@ -361,7 +361,7 @@ const connectWithRetry = () => {
             process.exit(1);
           }
         });
-        
+
         // Set server timeouts
         server.timeout = 60000; // 60 seconds
         server.keepAliveTimeout = 65000; // 65 seconds
@@ -373,7 +373,7 @@ const connectWithRetry = () => {
     })
     .catch((err) => {
       logger.error('❌ Failed to connect to MongoDB:', err.message);
-      
+
       // More detailed error diagnostics
       if (isCloudConnection) {
         logger.error('Cloud connection error details:');
@@ -387,7 +387,7 @@ const connectWithRetry = () => {
           logger.error('  - DNS lookup failed - check your MongoDB host/cluster URL');
         }
       }
-      
+
       logger.info('🔄 Retrying connection in 5 seconds...');
       setTimeout(connectWithRetry, 5000);
     });
@@ -424,7 +424,7 @@ mongoose.connection.on('disconnected', () => {
 process.on('SIGINT', async () => {
   process.env.SERVER_SHUTTING_DOWN = 'true';
   logger.info('SIGINT received. Shutting down gracefully...');
-  
+
   try {
     await mongoose.connection.close();
     logger.info('MongoDB connection closed through app termination');
@@ -438,7 +438,7 @@ process.on('SIGINT', async () => {
 process.on('SIGTERM', async () => {
   process.env.SERVER_SHUTTING_DOWN = 'true';
   logger.info('SIGTERM received. Shutting down gracefully...');
-  
+
   try {
     await mongoose.connection.close();
     logger.info('MongoDB connection closed through app termination');

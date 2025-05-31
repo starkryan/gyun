@@ -1,6 +1,6 @@
 /**
  * Report Routes
- * 
+ *
  * API routes for content reporting features:
  * - Public routes for users to submit reports
  * - Admin routes for managing and reviewing reports
@@ -20,4 +20,4 @@ router.get('/stats', validateAdmin, reportController.getReportStats);
 router.get('/:id', validateAdmin, reportController.getReportById);
 router.put('/:id/status', validateAdmin, reportController.updateReportStatus);
 
-module.exports = router; 
+module.exports = router;

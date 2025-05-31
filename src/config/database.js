@@ -15,7 +15,7 @@ const mongoOptions = {
   autoIndex: true,
   bufferCommands: true,
   keepAlive: true,
-  keepAliveInitialDelay: 300000
+  keepAliveInitialDelay: 300000,
 };
 
 // Track connection retry attempts
@@ -36,7 +36,7 @@ const getRetryDelay = () => {
 // Connect to MongoDB with retry mechanism
 const connectWithRetry = async () => {
   const uri = process.env.MONGODB_URI;
-  
+
   if (!uri) {
     logger.error('❌ MONGODB_URI environment variable is not set');
     process.exit(1);
@@ -50,22 +50,22 @@ const connectWithRetry = async () => {
 
     logger.info('Attempting to connect to MongoDB...');
     logger.info(`Using ${uri.includes('mongodb+srv') ? 'cloud' : 'local'} MongoDB connection`);
-    
+
     await mongoose.connect(uri, mongoOptions);
-    
+
     logger.info('🟢 MongoDB connection established');
     logger.info(`✅ Connected to MongoDB database: ${mongoose.connection.db.databaseName}`);
-    
+
     // Reset retry count on successful connection
     retryCount = 0;
-    
+
   } catch (error) {
     logger.error('❌ Failed to connect to MongoDB:', error.message);
-    
+
     if (retryCount < MAX_RETRIES) {
       retryCount++;
       const delay = getRetryDelay();
-      logger.info(`🔄 Retrying connection in ${delay/1000} seconds... (Attempt ${retryCount}/${MAX_RETRIES})`);
+      logger.info(`🔄 Retrying connection in ${delay / 1000} seconds... (Attempt ${retryCount}/${MAX_RETRIES})`);
       setTimeout(connectWithRetry, delay);
     } else {
       logger.error(`❌ Failed to connect after ${MAX_RETRIES} attempts. Exiting...`);
@@ -109,5 +109,5 @@ process.on('SIGINT', async () => {
 // Export the connection function and mongoose instance
 module.exports = {
   connectWithRetry,
-  mongoose
-}; 
+  mongoose,
+};

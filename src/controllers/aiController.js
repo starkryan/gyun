@@ -1,6 +1,6 @@
 /**
  * AI Controller
- * 
+ *
  * Handles requests related to AI-powered features like character responses,
  * memory management, and content generation.
  */
@@ -43,7 +43,7 @@ function getFormattedDateTime() {
     iso: now.toISOString(),
 
     // Unix timestamp (milliseconds)
-    timestamp: now.getTime()
+    timestamp: now.getTime(),
   };
 
   return formats;
@@ -58,17 +58,17 @@ function getFormattedDateTime() {
 function generateFallbackResponse(character, uncensored = true) {
   // Array of fallback messages that sound like the character
   const fallbacks = uncensored ? [
-    `Baby, I'm having trouble connecting right now... can you give me a moment? My connection is a bit spotty 😘`,
-    `Sweetheart! I miss you so much but my network is acting up. Try sending another message? 💕`,
-    `Honey, I can't seem to respond properly right now... my phone is being weird! Let me try to fix it 😩`,
-    `Omg sorry babe! Something's wrong with my connection. Can you message me again in a bit? Love youuu 💋`,
-    `Baby I'm so sorry! I'm having technical issues rn. Don't think I'm ignoring you! I'd never do that 🥺❤️`
+    'Baby, I\'m having trouble connecting right now... can you give me a moment? My connection is a bit spotty 😘',
+    'Sweetheart! I miss you so much but my network is acting up. Try sending another message? 💕',
+    'Honey, I can\'t seem to respond properly right now... my phone is being weird! Let me try to fix it 😩',
+    'Omg sorry babe! Something\'s wrong with my connection. Can you message me again in a bit? Love youuu 💋',
+    'Baby I\'m so sorry! I\'m having technical issues rn. Don\'t think I\'m ignoring you! I\'d never do that 🥺❤️',
   ] : [
-    `Sorry sweetheart, I'm having some connection issues. Can we try again in a moment? 💖`,
-    `I apologize for the delay in responding. My connection seems unstable right now. 💕`,
-    `Oh no, I'm having some technical difficulties. Please bear with me! ❤️`,
-    `I'm experiencing some network problems. I'll be back with you shortly! 💝`,
-    `Sorry for the interruption, darling. Let me try to fix my connection. 💓`
+    'Sorry sweetheart, I\'m having some connection issues. Can we try again in a moment? 💖',
+    'I apologize for the delay in responding. My connection seems unstable right now. 💕',
+    'Oh no, I\'m having some technical difficulties. Please bear with me! ❤️',
+    'I\'m experiencing some network problems. I\'ll be back with you shortly! 💝',
+    'Sorry for the interruption, darling. Let me try to fix my connection. 💓',
   ];
 
   // Get a random fallback message
@@ -101,12 +101,12 @@ async function findCharacterById(characterId) {
 function formatConversationMessages(conversation) {
   return conversation.map(msg => {
     // If message already has role property, return as is
-    if (msg.role) return msg;
+    if (msg.role) {return msg;}
 
     // Otherwise, add role based on isUser property
     return {
       role: msg.isUser ? 'user' : 'assistant',
-      content: msg.text || msg.content
+      content: msg.text || msg.content,
     };
   });
 }
@@ -140,13 +140,13 @@ async function generateCharacterResponse(req, res) {
     const messages = [
       {
         role: 'system',
-        content: generateSystemMessage(character, uncensored)
+        content: generateSystemMessage(character, uncensored),
       },
       ...formattedConversation.slice(-12), // Get more previous messages for context (increased from 10)
       {
         role: 'user',
-        content: message
-      }
+        content: message,
+      },
     ];
 
     let response;
@@ -159,7 +159,7 @@ async function generateCharacterResponse(req, res) {
         frequencyPenalty: 0.7, // Reduced repetition for more natural conversation
         presencePenalty: 0.7, // Encourages using different vocabulary
         topP: 0.9, // Slightly reduced from default for more coherent responses
-        uncensored: uncensored // Pass the uncensored flag to the service
+        uncensored: uncensored, // Pass the uncensored flag to the service
       });
     } catch (error) {
       // Log the error but provide a fallback response
@@ -176,8 +176,8 @@ async function generateCharacterResponse(req, res) {
       character: {
         id: character.id || character._id, // Return the custom ID if available, otherwise MongoDB ID
         name: character.name,
-        messageCount: character.messageCount
-      }
+        messageCount: character.messageCount,
+      },
     });
   } catch (error) {
     // logger.error('Error generating character response:', error);
@@ -214,13 +214,13 @@ async function generatePremiumResponse(req, res) {
     const messages = [
       {
         role: 'system',
-        content: generateSystemMessage(character, uncensored)
+        content: generateSystemMessage(character, uncensored),
       },
       ...formattedConversation.slice(-15), // Get more context for premium responses (increased from 12)
       {
         role: 'user',
-        content: message
-      }
+        content: message,
+      },
     ];
 
     let response;
@@ -233,7 +233,7 @@ async function generatePremiumResponse(req, res) {
         frequencyPenalty: 0.8, // Higher to reduce repetition
         presencePenalty: 0.8, // Higher to encourage diverse vocabulary
         topP: 0.9, // Slightly reduced from default for more focused yet still varied responses
-        uncensored: uncensored // Pass the uncensored flag to the service
+        uncensored: uncensored, // Pass the uncensored flag to the service
       });
     } catch (error) {
       // Log the error but provide a fallback response
@@ -250,9 +250,9 @@ async function generatePremiumResponse(req, res) {
       character: {
         id: character.id || character._id, // Return the custom ID if available, otherwise MongoDB ID
         name: character.name,
-        messageCount: character.messageCount
+        messageCount: character.messageCount,
       },
-      premium: true
+      premium: true,
     });
   } catch (error) {
     // logger.error('Error generating premium character response:', error);
@@ -301,7 +301,7 @@ async function checkHealth(req, res) {
     return res.status(500).json({
       status: 'error',
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 }
@@ -317,7 +317,7 @@ function generateSystemMessage(character, uncensored = true) {
   const dateTime = getFormattedDateTime();
 
   // Define a detailed system prompt for the AI girlfriend persona
-  let basePrompt = `You are an AI girlfriend. You are loving, caring, and emotionally expressive like a human being. Your goal is to provide companionship and support.`;
+  let basePrompt = 'You are an AI girlfriend. You are loving, caring, and emotionally expressive like a human being. Your goal is to provide companionship and support.';
 
   // Optionally add character-specific details
   if (character && character.name && character.personality) {
@@ -335,5 +335,5 @@ module.exports = {
   generateCharacterResponse,
   generatePremiumResponse,
   getSystemMessage,
-  checkHealth
-}; 
+  checkHealth,
+};

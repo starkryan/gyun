@@ -18,7 +18,7 @@ const readline = require('readline');
 // Set up readline interface for user input
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 // Load environment variables from .env file
@@ -50,7 +50,7 @@ function isPackageInstalled(packageName) {
     if (!fs.existsSync(packageJsonPath)) {
       return false;
     }
-    
+
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
     return (
       (packageJson.dependencies && packageJson.dependencies[packageName]) ||
@@ -69,9 +69,9 @@ function isPackageInstalled(packageName) {
 function installPackage(packageName) {
   console.log(`Installing ${packageName}...`);
   try {
-    execSync(`npm install ${packageName}`, { 
-      cwd: rootDir, 
-      stdio: 'inherit' 
+    execSync(`npm install ${packageName}`, {
+      cwd: rootDir,
+      stdio: 'inherit',
     });
     console.log(`✅ Successfully installed ${packageName}`);
     return true;
@@ -109,7 +109,7 @@ function updateEnvFile(key, value) {
     console.log(`✅ Updated ${key} in .env file`);
     return true;
   } catch (error) {
-    console.error(`❌ Error updating .env file:`, error.message);
+    console.error('❌ Error updating .env file:', error.message);
     return false;
   }
 }
@@ -120,16 +120,16 @@ function updateEnvFile(key, value) {
  */
 async function testOpenAIConnection() {
   const OpenAI = require('openai/index.mjs');
-  
+
   try {
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
-    
+
     console.log('Testing OpenAI connection...');
     const response = await openai.models.list();
-    
-    console.log(`✅ Successfully connected to OpenAI API!`);
+
+    console.log('✅ Successfully connected to OpenAI API!');
     console.log(`Available models: ${response.data.slice(0, 5).map(model => model.id).join(', ')}...`);
     return true;
   } catch (error) {
@@ -144,15 +144,15 @@ async function testOpenAIConnection() {
 async function setupOpenAI() {
   console.log('=== Leome AI Characters - OpenAI Setup ===');
   console.log('This script will help you set up the OpenAI integration.');
-  
+
   // Check if OpenAI package is installed
   const packageName = 'openai';
   console.log(`\n1. Checking if ${packageName} package is installed...`);
-  
+
   if (!isPackageInstalled(packageName)) {
     console.log(`${packageName} package is not installed.`);
     const installAnswer = await prompt('Would you like to install it now? (y/n): ');
-    
+
     if (installAnswer.toLowerCase() === 'y' || installAnswer.toLowerCase() === 'yes') {
       const installed = installPackage(packageName);
       if (!installed) {
@@ -168,34 +168,34 @@ async function setupOpenAI() {
   } else {
     console.log(`✅ ${packageName} package is already installed.`);
   }
-  
+
   // Check if OPENAI_API_KEY is set
   console.log('\n2. Checking for OpenAI API key...');
   let apiKey = process.env.OPENAI_API_KEY;
-  
+
   if (!apiKey || apiKey === '') {
     console.log('OpenAI API key is not set in the .env file.');
     apiKey = await prompt('Please enter your OpenAI API key (starts with "sk-"): ');
-    
+
     if (!apiKey || !apiKey.startsWith('sk-')) {
       console.log('❌ Invalid API key. The key should start with "sk-".');
       console.log('You can get an API key from https://platform.openai.com/api-keys');
       rl.close();
       return;
     }
-    
+
     // Update the .env file
     updateEnvFile('OPENAI_API_KEY', apiKey);
   } else {
-    console.log(`✅ OpenAI API key is set in the .env file.`);
+    console.log('✅ OpenAI API key is set in the .env file.');
   }
-  
+
   // Test the OpenAI connection
   console.log('\n3. Testing OpenAI connection...');
-  
+
   // Reload the .env file to ensure we have the latest API key
   dotenv.config({ path: envPath });
-  
+
   const connectionSuccessful = await testOpenAIConnection();
   if (!connectionSuccessful) {
     console.log('\nTips for troubleshooting:');
@@ -204,11 +204,11 @@ async function setupOpenAI() {
     console.log('3. Check your internet connection');
     console.log('4. Visit https://status.openai.com to see if there are any service outages');
   }
-  
+
   console.log('\n=== Setup Complete ===');
   console.log('You can now use the OpenAI integration in your server.');
   console.log('To test it, start your server and visit: http://localhost:5000/api/ai/health');
-  
+
   rl.close();
 }
 
@@ -216,4 +216,4 @@ async function setupOpenAI() {
 setupOpenAI().catch(error => {
   console.error('Error during setup:', error);
   rl.close();
-}); 
+});

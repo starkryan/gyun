@@ -33,7 +33,7 @@ exports.getStats = async (req, res) => {
       serverUptime: process.uptime(), // in seconds
       nodeVersion: process.version,
       mongoConnection: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || 'development',
     };
 
     res.status(200).json(stats);
@@ -146,4 +146,4 @@ exports.deleteCharacter = async (req, res) => {
     console.error('Error deleting character:', error);
     res.status(500).json({ message: 'Server error' });
   }
-}; 
+};

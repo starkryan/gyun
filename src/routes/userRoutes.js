@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const userController = require('../controllers/userController');
+const { getUserDiamonds, updateUserDiamonds } = require('../controllers/userController');
 const { protect } = require('../middleware/auth'); // Assuming auth middleware exists
 
 // Get user's diamond balance (protected route)
-router.get('/:firebaseUid/diamonds', protect, userController.getUserDiamonds);
+router.get('/:firebaseUid/diamonds', protect, getUserDiamonds);
 
 // Update user's diamond balance (protected route)
-router.put('/:firebaseUid/diamonds', protect, userController.updateUserDiamonds);
+router.put('/:firebaseUid/diamonds', protect, updateUserDiamonds);
 
 module.exports = router;

@@ -21,3 +21,10 @@ exports.adminAuth = (req, res, next) => {
   // If API key is valid, proceed
   next();
 };
+
+// Placeholder user authentication middleware
+// TODO: Implement proper user authentication (e.g., JWT verification)
+exports.protect = (req, res, next) => {
+  // For now, just allow the request to proceed
+  next();
+};

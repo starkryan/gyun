@@ -32,6 +32,7 @@ const aiRoutes = require('./routes/aiRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const mediaRoutes = require('./routes/mediaRoutes'); // Import media routes
 const payuRoutes = require('./routes/payuRoutes'); // Import PayU routes
+const userRoutes = require('./routes/userRoutes'); // Import user routes
 
 // Initialize Express app
 const app = express();
@@ -199,6 +200,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/media', mediaRoutes); // Use media routes
 app.use('/api/payu', payuRoutes); // Use PayU routes
+app.use('/api/users', userRoutes); // Use user routes
 
 // Health check route
 app.get('/api/health', (req, res) => {

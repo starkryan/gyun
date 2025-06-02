@@ -5,15 +5,23 @@ exports.getUserDiamonds = async (req, res) => {
   try {
     const { firebaseUid } = req.params; // Assuming firebaseUid is passed in params
 
-    const user = await User.findOne({ firebaseUid });
+    let user = await User.findOne({ firebaseUid });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      // If user not found, create them with default 0 diamonds
+      console.log(`User with firebaseUid ${firebaseUid} not found. Creating new user.`);
+      user = new User({
+        firebaseUid,
+        diamonds: 0, // Default diamonds for a new user
+      });
+      await user.save();
+      console.log(`New user created: ${user._id} with firebaseUid ${firebaseUid}`);
     }
 
     res.status(200).json({ diamonds: user.diamonds });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    console.error('Error in getUserDiamonds:', error);
+    res.status(500).json({ message: 'Server error while fetching diamonds', error: error.message });
   }
 };
 

@@ -6,11 +6,11 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  diamonds: {
-    type: Number,
-    required: true,
-    default: 0,
-  },
+  // diamonds: { // Field removed
+  //   type: Number,
+  //   required: true,
+  //   default: 0,
+  // },
   createdAt: {
     type: Date,
     default: Date.now,

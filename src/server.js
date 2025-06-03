@@ -9,6 +9,7 @@ const logger = require('./utils/logger');
 const helmet = require('helmet');
 const compression = require('compression');
 const timeout = require('connect-timeout');
+const { AccessToken } = require('livekit-server-sdk'); // Added for LiveKit
 
 // Load environment variables
 dotenv.config();
@@ -133,6 +134,35 @@ app.use('/admin', express.static(path.join(__dirname, '../admin')));
 // Serve the root path
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// LiveKit Token Endpoint
+const createLiveKitToken = async () => {
+  const roomName = 'quickstart-room'; // Or make this dynamic via query params
+  const participantName = 'quickstart-username'; // Or make this dynamic
+
+  if (!process.env.LIVEKIT_API_KEY || !process.env.LIVEKIT_API_SECRET) {
+    logger.error('LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set in environment variables.');
+    throw new Error('Server configuration error for LiveKit token generation.');
+  }
+
+  const at = new AccessToken(process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET, {
+    identity: participantName,
+    ttl: '10m', // Token expires in 10 minutes
+  });
+  at.addGrant({ roomJoin: true, room: roomName });
+
+  return await at.toJwt();
+};
+
+app.get('/getToken', async (req, res) => {
+  try {
+    const token = await createLiveKitToken();
+    res.send(token);
+  } catch (error) {
+    logger.error('Failed to create LiveKit token:', error.message);
+    res.status(500).send('Failed to generate LiveKit token');
+  }
 });
 
 // Add a MongoDB status endpoint

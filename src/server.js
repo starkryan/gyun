@@ -9,7 +9,7 @@ const logger = require('./utils/logger');
 const helmet = require('helmet');
 const compression = require('compression');
 const timeout = require('connect-timeout');
-// const { AccessToken } = require('livekit-server-sdk'); // Removed LiveKit
+const { AccessToken } = require('livekit-server-sdk'); // Re-enabled LiveKit
 // const { StreamClient } = require('@stream-io/node-sdk'); // Removed Stream.io
 const crypto = require('crypto'); // For generating UUIDs for callId and userId
 
@@ -40,6 +40,7 @@ const mediaRoutes = require('./routes/mediaRoutes'); // Import media routes
 // const payuRoutes = require('./routes/payuRoutes'); // Removed PayU routes
 const userRoutes = require('./routes/userRoutes'); // Import user routes
 const carasoulsRoutes = require('./routes/carasoulsRoutes'); // Import carousel routes
+const livekitRoutes = require('./routes/livekitRoutes'); // Import livekit routes
 
 // Initialize Express app
 const app = express();
@@ -157,8 +158,6 @@ app.get('/', (req, res) => {
 
 // Removed Stream.io related helper function and endpoints
 
-// Removed LiveKit Token Endpoint
-
 // Add a MongoDB status endpoint
 app.get('/api/db-status', async (req, res) => {
   try {
@@ -206,6 +205,7 @@ app.get('/api/db-status', async (req, res) => {
 });
 
 // Routes
+app.use('/api/livekit', livekitRoutes); // Use livekit routes
 app.use('/api/characters', characterRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', aiRoutes);
